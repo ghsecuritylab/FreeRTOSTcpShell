@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2010
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TcpShell", "TcpShell\TcpShell.vcxproj", "{AA38C0EC-5293-4C40-A208-71F6FD677538}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|VisualGDB = Debug|VisualGDB
+		Release|VisualGDB = Release|VisualGDB
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AA38C0EC-5293-4C40-A208-71F6FD677538}.Debug|VisualGDB.ActiveCfg = Debug|VisualGDB
+		{AA38C0EC-5293-4C40-A208-71F6FD677538}.Debug|VisualGDB.Build.0 = Debug|VisualGDB
+		{AA38C0EC-5293-4C40-A208-71F6FD677538}.Release|VisualGDB.ActiveCfg = Release|VisualGDB
+		{AA38C0EC-5293-4C40-A208-71F6FD677538}.Release|VisualGDB.Build.0 = Release|VisualGDB
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5B774A03-8808-451E-88BC-F0F8BEB826E4}
+	EndGlobalSection
+EndGlobal
