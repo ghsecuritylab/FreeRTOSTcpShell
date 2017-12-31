@@ -34,6 +34,111 @@
     <Filter Include="VisualGDB settings">
       <UniqueIdentifier>{42a56518-176c-49e8-a619-08fdf5d99ab6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP">
+      <UniqueIdentifier>{9e13f7d1-b58f-46d9-82da-656cedd54fe5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\core">
+      <UniqueIdentifier>{935cd21e-c363-4741-9932-36d0fb99d200}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\core\ipv4">
+      <UniqueIdentifier>{ddf73c76-d66b-4e62-9d9a-98f0a986c2e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\core\ipv6">
+      <UniqueIdentifier>{af08e2cf-f408-429c-9d0d-365be099f1fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP">
+      <UniqueIdentifier>{9c89880e-64a5-462d-ad6d-6ab27cfa24b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\api">
+      <UniqueIdentifier>{d6825614-e2df-4b00-8938-e03c92f1e111}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include">
+      <UniqueIdentifier>{243020aa-94f0-4c10-be24-3df51cb78825}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\lwip">
+      <UniqueIdentifier>{63414365-5e47-4208-a8e0-03eb2318245a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\lwip\apps">
+      <UniqueIdentifier>{494f4e50-14f6-453e-9366-3e8a6dea8822}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\lwip\priv">
+      <UniqueIdentifier>{6937076c-7eee-449c-9b78-da03b95fef31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\lwip\prot">
+      <UniqueIdentifier>{53ce882f-b412-40d5-a734-b4fa834c2c77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\netif">
+      <UniqueIdentifier>{7ebac73c-11c4-4d98-99ad-4c14ca792f8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\netif\ppp">
+      <UniqueIdentifier>{643d9afa-5bf3-4556-a4e8-ffae844ae893}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\netif\ppp\polarssl">
+      <UniqueIdentifier>{4725108d-eced-480f-9cc2-eb5f2fe7bab3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\posix">
+      <UniqueIdentifier>{a4c2c39c-18e2-4b1a-8fb4-ee9cd3d7d904}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\include\posix\sys">
+      <UniqueIdentifier>{485b0166-5348-421d-9987-0554022d6ec6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include">
+      <UniqueIdentifier>{6cd49d70-4876-4d79-bf48-d6f1e78ccde5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\lwip">
+      <UniqueIdentifier>{2882346a-e2c2-496c-b704-fc16593909e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\lwip\apps">
+      <UniqueIdentifier>{a03b080d-adaf-4263-b721-66e658327d11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\lwip\priv">
+      <UniqueIdentifier>{9f6fe00f-e4ee-4b12-9b3b-00035ba1ccc1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\lwip\prot">
+      <UniqueIdentifier>{655259d6-ad52-4d79-bcba-421c70582e95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\netif">
+      <UniqueIdentifier>{290d0506-4abe-498a-a0c3-43d73e59dd9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\netif\ppp">
+      <UniqueIdentifier>{5aaccec8-b2be-4512-b766-1765826adb03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\netif\ppp\polarssl">
+      <UniqueIdentifier>{759ffe62-bcb1-4ee2-8524-cc10f0e72dc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\posix">
+      <UniqueIdentifier>{0d2ff900-614d-4457-8f7e-13ced1b2b472}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\include\posix\sys">
+      <UniqueIdentifier>{aee762fb-954a-4913-94a4-9795bc192e38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\OS">
+      <UniqueIdentifier>{4ca1c0ec-370a-4bc8-853f-36e5a7125f98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\arch">
+      <UniqueIdentifier>{0b172b23-4aa8-4abb-a152-f012b7a40ad0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\arch">
+      <UniqueIdentifier>{febfc367-73af-4d08-8a42-63267b271471}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\netif">
+      <UniqueIdentifier>{aca7a116-e561-4b9a-b2c4-110718b752d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\netif\ppp">
+      <UniqueIdentifier>{ce90914a-48ee-46ef-86b1-4ac39f413871}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Device-specific files\lwIP\netif\ppp\polarssl">
+      <UniqueIdentifier>{35b4f6e0-ed30-446a-990b-d5fe6db8ce62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\netif">
+      <UniqueIdentifier>{bbdd5205-3501-4862-8439-ba242d1d3b92}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\netif\ppp">
+      <UniqueIdentifier>{506b92cd-982c-4677-8e0c-0cf36c7c0232}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\Device-specific files\lwIP\netif\ppp\polarssl">
+      <UniqueIdentifier>{e5337be1-28e0-4698-be95-c74c40fcc9b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TcpShell.c">
@@ -744,9 +849,651 @@
     <ClCompile Include="Led.c">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\def.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\dns.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\inet_chksum.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\init.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ip.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\mem.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\memp.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\netif.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\pbuf.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\raw.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\stats.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\sys.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\tcp.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\tcp_in.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\tcp_out.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\timeouts.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\udp.c">
+      <Filter>Source files\Device-specific files\lwIP\core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\autoip.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\dhcp.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\etharp.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\icmp.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\igmp.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\ip4.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\ip4_addr.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv4\ip4_frag.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv4</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\dhcp6.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\ethip6.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\icmp6.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\inet6.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\ip6.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\ip6_addr.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\ip6_frag.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\mld6.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\core\ipv6\nd6.c">
+      <Filter>Source files\Device-specific files\lwIP\core\ipv6</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\api_lib.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\api_msg.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\err.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\netbuf.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\netdb.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\netifapi.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\sockets.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\api\tcpip.c">
+      <Filter>Source files\Device-specific files\lwIP\api</Filter>
+    </ClCompile>
+    <ClInclude Include="..\LwIP\src\include\lwip\api.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\arch.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\autoip.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\debug.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\def.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\dhcp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\dhcp6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\dns.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\err.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\errno.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\etharp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ethip6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\icmp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\icmp6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\igmp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\inet.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\inet_chksum.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\init.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip4.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip4_addr.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip4_frag.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip6_addr.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip6_frag.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\ip_addr.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\mem.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\memp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\mld6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\nd6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\netbuf.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\netdb.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\netif.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\netifapi.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\opt.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\pbuf.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\raw.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\sio.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\snmp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\sockets.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\stats.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\sys.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\tcp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\tcpip.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\timeouts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\udp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\fs.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\httpd.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\httpd_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\lwiperf.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\mdns.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\mdns_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\mdns_priv.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\netbiosns.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\netbiosns_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmpv3.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmp_core.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmp_mib2.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmp_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmp_scalar.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmp_table.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\snmp_threadsync.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\sntp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\sntp_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\tftp_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\apps\tftp_server.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\apps</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\priv\api_msg.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\priv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\priv\memp_priv.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\priv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\priv\memp_std.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\priv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\priv\tcpip_priv.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\priv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\priv\tcp_priv.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\priv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\autoip.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\dhcp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\dns.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\etharp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\ethernet.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\icmp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\icmp6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\igmp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\ip.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\ip4.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\ip6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\mld6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\nd6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\tcp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\lwip\prot\udp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\lwip\prot</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\etharp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ethernet.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\lowpan6.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\lowpan6_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\slipif.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\ccp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\chap-md5.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\chap-new.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\chap_ms.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\eap.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\ecp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\eui64.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\fsm.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\ipcp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\ipv6cp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\lcp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\magic.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\mppe.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\ppp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\pppapi.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\pppcrypt.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\pppdebug.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\pppoe.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\pppol2tp.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\pppos.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\ppp_impl.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\ppp_opts.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\upap.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\vj.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\polarssl\arc4.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp\polarssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\polarssl\des.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp\polarssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\polarssl\md4.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp\polarssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\polarssl\md5.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp\polarssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\netif\ppp\polarssl\sha1.h">
+      <Filter>Header files\Device-specific files\lwIP\include\netif\ppp\polarssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\posix\errno.h">
+      <Filter>Header files\Device-specific files\lwIP\include\posix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\posix\netdb.h">
+      <Filter>Header files\Device-specific files\lwIP\include\posix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\src\include\posix\sys\socket.h">
+      <Filter>Header files\Device-specific files\lwIP\include\posix\sys</Filter>
+    </ClInclude>
+    <ClCompile Include="..\LwIP\system\OS\sys_arch.c">
+      <Filter>Source files\Device-specific files\lwIP\OS</Filter>
+    </ClCompile>
+    <ClInclude Include="..\LwIP\system\arch\bpstruct.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\system\arch\cc.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\system\arch\cpu.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\system\arch\epstruct.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\system\arch\init.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\system\arch\lib.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\system\arch\perf.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LwIP\system\arch\sys_arch.h">
+      <Filter>Header files\Device-specific files\lwIP\arch</Filter>
+    </ClInclude>
+    <ClCompile Include="ethernetif.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="TcpServer.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ethernet.c">
+      <Filter>Source files\Device-specific files\lwIP\netif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ethernetif_template.c">
+      <Filter>Source files\Device-specific files\lwIP\netif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\lowpan6.c">
+      <Filter>Source files\Device-specific files\lwIP\netif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\slipif.c">
+      <Filter>Source files\Device-specific files\lwIP\netif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\auth.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\ccp.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\chap-md5.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\chap-new.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\chap_ms.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\demand.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\eap.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\ecp.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\eui64.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\fsm.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\ipcp.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\ipv6cp.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\lcp.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\magic.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\mppe.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\multilink.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\ppp.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\pppapi.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\pppcrypt.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\pppoe.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\pppol2tp.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\pppos.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\upap.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\utils.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\vj.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\polarssl\arc4.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp\polarssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\polarssl\des.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp\polarssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\polarssl\md4.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp\polarssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\polarssl\md5.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp\polarssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LwIP\src\netif\ppp\polarssl\sha1.c">
+      <Filter>Source files\Device-specific files\lwIP\netif\ppp\polarssl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tcpshell.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="stm32_assert.h">
+      <Filter>Header files\Device-specific files</Filter>
+    </ClInclude>
+    <ClInclude Include="lwipopts.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ethernetif.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

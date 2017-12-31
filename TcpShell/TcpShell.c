@@ -43,12 +43,13 @@ int main(void)
 	     - Set NVIC Group Priority to 4
 	     - Global MSP (MCU Support Package) initialization
 	*/
-	printf("Calling HAL_Init()\n");
+	dprintf("Calling HAL_Init()\n");
 	HAL_Init();  
 	LedInit();
+	TcpInit();
   
 	/* Start scheduler */
-	printf("TcpShell: about to call osKernelStart()\n");	
+	dprintf("TcpShell: about to call osKernelStart()\n");	
 	osKernelStart();
 
 	/* We should never get here as control is now taken by the scheduler */
