@@ -59,13 +59,16 @@
   <ItemGroup>
     <ClCompile Include="ethernetif.c" />
     <ClCompile Include="Led.c" />
+    <ClCompile Include="LogonApp.c" />
     <ClCompile Include="TcpServer.c" />
     <ClCompile Include="TcpShell.c" />
     <ClCompile Include="system_stm32f7xx.c" />
+    <ClCompile Include="User.c" />
     <ClInclude Include="ethernetif.h" />
     <ClInclude Include="lwipopts.h" />
     <ClInclude Include="stm32_assert.h" />
     <ClInclude Include="tcpshell.h" />
+    <ClInclude Include="User.h" />
     <None Include="stm32.props" />
     <ClCompile Include="$(BSP_ROOT)\STM32F7xxxx\StartupFiles\startup_stm32f746xx.c" />
     <None Include="$(BSP_ROOT)\FreeRTOS\License\license.txt" />

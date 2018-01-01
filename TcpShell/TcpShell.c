@@ -43,16 +43,19 @@ int main(void)
 	     - Set NVIC Group Priority to 4
 	     - Global MSP (MCU Support Package) initialization
 	*/
-	dprintf("Calling HAL_Init()\n");
+	dprintf("TcpShell: Init code. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
 	HAL_Init();  
 	LedInit();
-	TcpInit();
+	UserInit(MAX_CONNECTIONS);
+	TcpInit(SERVER_PORT, MAX_CONNECTIONS);
   
 	/* Start scheduler */
 	dprintf("TcpShell: about to call osKernelStart()\n");	
 	osKernelStart();
 
 	/* We should never get here as control is now taken by the scheduler */
+	dprintf("TcpShell: Broke out of osKernelStart()\n");
+	LedError(ErrorCodeBrokeOutOfOsKernelStart);
 	for (;;) ;
 }
 
@@ -72,7 +75,7 @@ void SysTick_Handler(void)
   */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-	printf("Assert failed: file %s on line %d\r\n", file, line);
+	printf("Assert failed: file %s on line %lu\r\n", file, line);
 
 	while (1)
 	{

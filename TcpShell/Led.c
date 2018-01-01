@@ -1,11 +1,17 @@
 #include <stm32f7xx_hal.h>
 #include <../CMSIS_RTOS/cmsis_os.h>
+#include <assert.h>
 #include "tcpshell.h"
 
-osThreadId LEDThread1Handle, LEDThread2Handle;
+static osThreadId HeartbeatLedHandle = NULL;
+static osThreadId BusyLedHandle = NULL;
+static osThreadId ErrorLedHandle = NULL;
 
-static void LED_Thread1(void const *argument);
-static void LED_Thread2(void const *argument);
+static void HeartbeatLedThread(void const *argument);
+static void BusyLedThread(void const *argument);
+static void ErrorLedThread(void const *argument);
+
+volatile int BlinkCode = 0;
 
 void LedInit()
 {
@@ -19,20 +25,22 @@ void LedInit()
 	HAL_GPIO_Init(GPIOB, &gpioInitStructure);
 
 	/* Thread 1 definition */
-	osThreadDef(LED1, LED_Thread1, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+	osThreadDef(HeartbeatLed, HeartbeatLedThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
   
 	/*  Thread 2 definition */
-	osThreadDef(LED2, LED_Thread2, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+	osThreadDef(BusyLed, BusyLedThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+	
+	/*  Thread 3 definition */
+	osThreadDef(ErrorLed, ErrorLedThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
   
 	/* Start thread 1 */
-	LEDThread1Handle = osThreadCreate(osThread(LED1), NULL);
+	HeartbeatLedHandle = osThreadCreate(osThread(HeartbeatLed), NULL);
   
 	/* Start thread 2 */
-	LEDThread2Handle = osThreadCreate(osThread(LED2), NULL);
+	BusyLedHandle = osThreadCreate(osThread(BusyLed), NULL);
 	
-	LedErrorOn();
-	for (int i = 0; i < 100000; ++i) ;
-	LedErrorOff();
+	/* Start the error thread */
+	ErrorLedHandle = osThreadCreate(osThread(ErrorLed), NULL);
 }
 
 /**
@@ -40,7 +48,7 @@ void LedInit()
   * @param  thread not used
   * @retval None
   */
-static void LED_Thread1(void const *argument)
+static void HeartbeatLedThread(void const *argument)
 {
 	(void) argument;
   
@@ -59,7 +67,7 @@ static void LED_Thread1(void const *argument)
   * @param  argument not used
   * @retval None
   */
-static void LED_Thread2(void const *argument)
+static void BusyLedThread(void const *argument)
 {
 	uint32_t count;
 	(void) argument;
@@ -71,22 +79,48 @@ static void LED_Thread2(void const *argument)
 	}
 }
 
+static void ErrorLedThread(void const *argument)
+{
+	int i;
+	
+	// Blink code is one second per blink between a 3 second delay
+	for (;;)
+	{
+		int count = BlinkCode;
+		if (count > 0)
+		{
+			
+			for (i = 0; i < count; ++i)
+			{
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+				osDelay(500);
+				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+				osDelay(750);
+			}
+		}
+		
+		osDelay(1000);
+	}
+}
+
 void LedThinkingOn()
 {
-	osThreadResume(LEDThread2Handle);
+	osThreadResume(BusyLedHandle);
 }
 
 void LedThinkingOff()
 {
-	osThreadSuspend(LEDThread2Handle);
+	osThreadSuspend(BusyLedHandle);
 }
 
-void LedErrorOn()
+void LedError(ErrorCode error)
 {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-}
-
-void LedErrorOff()
-{
+	assert(error >= 0);
+	osThreadSuspend(ErrorLedHandle);
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+	BlinkCode = (int)error;
+	if (error != ErrorCodeNone)
+	{
+		osThreadResume(ErrorLedHandle);	
+	}
 }

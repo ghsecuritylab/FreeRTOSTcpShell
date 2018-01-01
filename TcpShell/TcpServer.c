@@ -50,12 +50,40 @@
 #include <lwip/dhcp.h>
 #include <lwip/tcpip.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <assert.h>
 #include "tcpshell.h"
 #include "ethernetif.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+
+/*Static IP ADDRESS*/
+#define IP_ADDR0   169
+#define IP_ADDR1   254
+#define IP_ADDR2   152
+#define IP_ADDR3   100
+   
+/*NETMASK*/
+#define NETMASK_ADDR0   255
+#define NETMASK_ADDR1   255
+#define NETMASK_ADDR2   0
+#define NETMASK_ADDR3   0
+
+/*Gateway Address*/
+#define GW_ADDR0   169
+#define GW_ADDR1   254
+#define GW_ADDR2   0
+#define GW_ADDR3   1 
+
+/*DHCP states*/
+#define DHCP_OFF                   (uint8_t) 0
+#define DHCP_START                 (uint8_t) 1
+#define DHCP_WAIT_ADDRESS          (uint8_t) 2
+#define DHCP_ADDRESS_ASSIGNED      (uint8_t) 3
+#define DHCP_TIMEOUT               (uint8_t) 4
+#define DHCP_LINK_DOWN             (uint8_t) 5
+
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 #ifdef USE_DHCP
@@ -63,7 +91,9 @@
 __IO uint8_t DHCP_state = DHCP_OFF;
 #endif
 struct netif gnetif; /* network interface structure */
-volatile int conns = 0;
+static int Port = 0;
+static int MaxConns = 0;
+static volatile int conns = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 static void TcpThread(void const * argument);
@@ -73,8 +103,12 @@ static void DHCP_thread(void const * argument);
 static void User_notification(struct netif *netif);
 static void Netif_Config(void);
 
-void TcpInit()
+void TcpInit(int port, int maxConns)
 {
+	assert(port > 0 && maxConns > 0);
+	Port = port;
+	MaxConns = maxConns;
+	
 	/* Init thread */
 #if defined(__GNUC__)
 	osThreadDef(Tcp, TcpThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 5);
@@ -125,31 +159,39 @@ void ServerThread(void const * argument)
 	if (conn != NULL)
 	{
 		/* Bind to port 80 (HTTP) with default IP address */
-		err = netconn_bind(conn, NULL, SERVER_PORT);
+		err = netconn_bind(conn, NULL, Port);
     
 		if (err == ERR_OK)
 		{
 			/* Put the connection into LISTEN state */
+			netconn_set_recvtimeout(conn, 1000);
 			netconn_listen(conn);
   
-			while (1) 
+			for (;;)
 			{
 				/* accept any icoming connection */
 				accept_err = netconn_accept(conn, &newconn);
 				if (accept_err == ERR_OK)
 				{
-					assert(conns >= 0 && conns <= MAX_CONNECTIONS);
-					if (conns == MAX_CONNECTIONS)
+					assert(conns >= 0 && conns <= MaxConns);
+					if (conns == MaxConns)
 					{
 						/* delete connection... we're full */
+						netconn_close(newconn);
 						netconn_delete(newconn);
 					}
 					else
 					{
+						netconn_set_recvtimeout(newconn, 250);
 						++conns;
 						osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 2);
 						osThreadCreate(osThread(Connection), newconn);
 					}
+				}
+				else if (accept_err != ERR_TIMEOUT)
+				{
+					dprintf("netconn_accept failed: %d", accept_err);
+					LedError(ErrorCodeNetconnAcceptFailure);
 				}
 			}
 		}
@@ -162,37 +204,83 @@ void ConnectionThread(void const * argument)
 	err_t err;
 	int conn = conns;
 	static const size_t recvsize = 1 << 10;
-	char* recvbuff = NULL;
+	struct netbuf *inbuf;
+	char* buf;
+	u16_t buflen;
+	bool sessionLoaded = false;
 	
 	newconn = (struct netconn*)argument;
-	recvbuff = malloc(recvsize);
-	if (recvbuff)
-	{
-		u32_t remoteaddr = newconn->pcb.ip->remote_ip.addr;
-		dprintf("%d: Accepting connection from %lu.%lu.%lu.%lu\n", 
-			conn,
-			(remoteaddr >> 24) & 0xFF,
-			(remoteaddr >> 16) & 0xFF,
-			(remoteaddr >> 8) & 0xFF,
-			remoteaddr & 0xFF);
+	u32_t remoteaddr = newconn->pcb.ip->remote_ip.addr;
+	dprintf("%d: Accepting connection from %lu.%lu.%lu.%lu\n", 
+		conn,
+		(remoteaddr >> 24) & 0xFF,
+		(remoteaddr >> 16) & 0xFF,
+		(remoteaddr >> 8) & 0xFF,
+		remoteaddr & 0xFF);
 	
-		// We hook into our user queue (just one queue.. no matter how many users there are commands get handled one at a time...)
-		// and get command responses from it until we get a terminal response, at which case the connection closes.
-		
+	// We hook into our user queue (just one queue.. no matter how many users there are commands get handled one at a time...)
+	// and get command responses from it until we get a terminal response, at which case the connection closes.
+	if (UserSessionLoad(conn))
+	{
+		sessionLoaded = true;
+		while (UserSessionActive(conn))
+		{
+			char ch;
+			while (ch = UserSessionGetChar(conn))
+			{
+				// Send the char
+				err = netconn_write(newconn, &ch, sizeof(ch), NETCONN_NOCOPY);
+				if (err != ERR_OK)
+				{
+					dprintf("%d: netconn_write failed\n", err);
+					goto done;
+				}
+			}
+				
+			while (err = netconn_recv(newconn, &inbuf))
+			{
+				if (err == ERR_OK)
+				{
+					if (netconn_err(newconn) == ERR_OK) 
+					{
+						u16_t i;
+						netbuf_data(inbuf, (void**)&buf, &buflen);
+						for (i = 0; i < buflen; ++i)
+						{
+							// We have pending
+							if(!UserSessionPutChar(conn, ch))
+							{
+								goto done;
+							}
+						}
+					}
+				}
+				else if (err != ERR_TIMEOUT)
+				{
+					goto done;
+				}
+			}
+		}
 	}
 	
 done:
-	dprintf("%d: Closing connection\n", conn);
+	dprintf("%d: Closing connection. netconn err=%d\n", conn, err);
 	--conns;
 	assert(conns >= 0);
-	if (newconn)
+	if (sessionLoaded)
 	{
-		netconn_delete(newconn);
+		UserSessionUnload(conn);	
 	}
 	
-	if (recvbuff)
+	if (newconn)
 	{
-		free(recvbuff);
+		if (err == ERR_OK)
+		{
+			// Only close if the conn is still open
+			netconn_close(newconn);	
+		}
+		
+		netconn_delete(newconn);
 	}
 }
 
@@ -260,7 +348,7 @@ void User_notification(struct netif *netif)
 #endif  /* USE_DHCP */
 		/* Turn On LED 3 to indicate ETH and LwIP init error */
 		dprintf("ETH and LWIP init error\n");
-		LedErrorOn();
+		LedError(ErrorCodeEthAndLwipInit);
 	} 
 }
 
@@ -298,7 +386,7 @@ void DHCP_thread(void const * argument)
 				{
 					DHCP_state = DHCP_ADDRESS_ASSIGNED;	
           
-					LedErrorOff();
+					LedError(ErrorCodeNone);
 					dprintf("DHCP address assigned\n");
 				}
 				else
@@ -319,12 +407,12 @@ void DHCP_thread(void const * argument)
 						IP_ADDR4(&gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
 						netif_set_addr(netif, ip_2_ip4(&ipaddr), ip_2_ip4(&netmask), ip_2_ip4(&gw));
 
-						LedErrorOn();
+						LedError(ErrorCodeDhcpTimeout);
 						dprintf("DHCP timeout. Defaulting to %d.%d.%d.%d instead.\n", IP_ADDR0, IP_ADDR1, IP_ADDR2, IP_ADDR3);
 					}
 					else
 					{
-						LedErrorOff();
+						LedError(ErrorCodeNone);
 					}
 				}
 			}
