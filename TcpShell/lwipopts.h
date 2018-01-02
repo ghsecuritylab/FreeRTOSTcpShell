@@ -46,7 +46,10 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#include <limits.h>
+
 #define LWIP_SO_RCVTIMEO        1
+#define LWIP_SO_RCVBUF          1
 
 /**
  * NO_SYS==1: Provides VERY minimal functionality. Otherwise,

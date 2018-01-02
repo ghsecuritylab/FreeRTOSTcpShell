@@ -41,7 +41,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|VisualGDB'">
     <ClCompile>
-      <PreprocessorDefinitions>%(ClCompile.PreprocessorDefinitions);DEBUG=1;USE_FULL_ASSERT;USE_DHCP;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>%(ClCompile.PreprocessorDefinitions);DEBUG=1;USE_FULL_ASSERT;USE_DHCP;DEBUG_DEFAULT_INTERRUPT_HANDLERS;LWIP_DEBUG</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\LwIP\src\include;$(SolutionDir)\LwIP\src\system;$(SolutionDir)\LwIP\system;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -57,13 +57,12 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="EchoApp.c" />
     <ClCompile Include="ethernetif.c" />
     <ClCompile Include="Led.c" />
-    <ClCompile Include="LogonApp.c" />
     <ClCompile Include="TcpServer.c" />
     <ClCompile Include="TcpShell.c" />
     <ClCompile Include="system_stm32f7xx.c" />
-    <ClCompile Include="User.c" />
     <ClInclude Include="ethernetif.h" />
     <ClInclude Include="lwipopts.h" />
     <ClInclude Include="stm32_assert.h" />

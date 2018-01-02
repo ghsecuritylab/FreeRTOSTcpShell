@@ -1,6 +1,7 @@
 #include <stm32f7xx_hal.h>
 #include <../CMSIS_RTOS/cmsis_os.h>
 #include <assert.h>
+#include <stdbool.h>
 #include "tcpshell.h"
 
 static osThreadId HeartbeatLedHandle = NULL;

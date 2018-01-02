@@ -28,7 +28,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stm32f7xx_hal.h>
 #include <../CMSIS_RTOS/cmsis_os.h>
+#include <stdbool.h>
 #include "tcpshell.h"
+
+extern ETH_HandleTypeDef EthHandle;
 
 /**
   * @brief  Main program
@@ -46,13 +49,13 @@ int main(void)
 	dprintf("TcpShell: Init code. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
 	HAL_Init();  
 	LedInit();
-	UserInit(MAX_CONNECTIONS);
 	TcpInit(SERVER_PORT, MAX_CONNECTIONS);
   
 	/* Start scheduler */
 	dprintf("TcpShell: about to call osKernelStart()\n");	
+	LedThinkingOff();
 	osKernelStart();
-
+	
 	/* We should never get here as control is now taken by the scheduler */
 	dprintf("TcpShell: Broke out of osKernelStart()\n");
 	LedError(ErrorCodeBrokeOutOfOsKernelStart);
@@ -63,6 +66,11 @@ void SysTick_Handler(void)
 {
 	HAL_IncTick();
 	osSystickHandler();
+}
+
+void ETH_IRQHandler(void)
+{
+	HAL_ETH_IRQHandler(&EthHandle);
 }
 
 #ifdef  USE_FULL_ASSERT

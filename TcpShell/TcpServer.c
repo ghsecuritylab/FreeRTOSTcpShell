@@ -50,9 +50,12 @@
 #include <lwip/dhcp.h>
 #include <lwip/tcpip.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <queue.h>
 #include "tcpshell.h"
+#include "User.h"
 #include "ethernetif.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,13 +95,15 @@ __IO uint8_t DHCP_state = DHCP_OFF;
 #endif
 struct netif gnetif; /* network interface structure */
 static int Port = 0;
-static int MaxConns = 0;
-static volatile int conns = 0;
+static unsigned int MaxConns = 0;
+static volatile unsigned int conns = 0;
+static const size_t recvsize = 128;
 
 /* Private function prototypes -----------------------------------------------*/
 static void TcpThread(void const * argument);
 static void ServerThread(void const * argument);
 static void ConnectionThread(void const * argument);
+static void UserSessionRun(PUserContext Context);
 static void DHCP_thread(void const * argument);
 static void User_notification(struct netif *netif);
 static void Netif_Config(void);
@@ -119,6 +124,58 @@ void TcpInit(int port, int maxConns)
 	osThreadCreate(osThread(Tcp), NULL);
 }
 
+int TcpPutchar(PUserContext context, char ch)
+{
+	err_t err;
+	// Send the char
+	err = netconn_write(context->conn, &ch, sizeof(ch), NETCONN_NOCOPY);
+	if (ERR_IS_FATAL(err))
+	{
+		dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, err, lwip_strerr(err));
+	}
+	
+	return err;
+}
+
+int TcpGetchar(PUserContext context)
+{
+	if (context->buf && context->remaining > 0)
+	{
+		char ch;
+		--context->remaining;
+		ch = *context->ptr;
+		++context->buf;
+		return ch;
+	}
+	else
+	{
+		err_t err;
+	
+		if (context->buf)
+		{
+			netbuf_delete(context->buf);
+		}
+		
+		// Read more...
+		err = netconn_recv(context->conn, &context->buf);
+		if (err == ERR_OK) 
+		{
+			netbuf_data(context->buf, (void**)&context->ptr, &context->remaining);
+		}
+		else
+		{
+			if (ERR_IS_FATAL(err))
+			{
+				dprintf("%d: netconn_recv failed: %d (%s)\n", context->connid, err, lwip_strerr(err));	
+			}
+			
+			return err;
+		}
+		
+		return TcpGetchar(context);
+	}
+}
+
 /* Private functions ---------------------------------------------------------*/
 void TcpThread(void const* argument)
 {
@@ -129,8 +186,8 @@ void TcpThread(void const* argument)
 	Netif_Config();
   
 	/* Initialize server thread */
-	osThreadDef(Server, ServerThread, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 2);
-	osThreadCreate(osThread(Server), &gnetif);
+	osThreadDef(TcpServer, ServerThread, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 2);
+	osThreadCreate(osThread(TcpServer), &gnetif);
   
 	/* Notify user about the network interface config */
 	User_notification(&gnetif);
@@ -165,6 +222,7 @@ void ServerThread(void const * argument)
 		{
 			/* Put the connection into LISTEN state */
 			netconn_set_recvtimeout(conn, 1000);
+			netconn_set_recvbufsize(conn, 1 << 12);
 			netconn_listen(conn);
   
 			for (;;)
@@ -182,10 +240,17 @@ void ServerThread(void const * argument)
 					}
 					else
 					{
-						netconn_set_recvtimeout(newconn, 250);
-						++conns;
-						osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 2);
-						osThreadCreate(osThread(Connection), newconn);
+						PUserContext newContext = pvPortMalloc(sizeof(UserContext));
+						if (newContext)
+						{
+							memset(newContext, 0, sizeof(UserContext));
+							newContext->conn = newconn;
+							newContext->connid = conns;
+							netconn_set_recvbufsize(newconn, recvsize);
+							++conns;
+							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 2);
+							osThreadCreate(osThread(Connection), newContext);
+						}
 					}
 				}
 				else if (accept_err != ERR_TIMEOUT)
@@ -200,87 +265,62 @@ void ServerThread(void const * argument)
 
 void ConnectionThread(void const * argument)
 {
-	struct netconn *newconn = NULL;
+	PUserContext context = (PUserContext)argument;
 	err_t err;
-	int conn = conns;
-	static const size_t recvsize = 1 << 10;
-	struct netbuf *inbuf;
-	char* buf;
-	u16_t buflen;
-	bool sessionLoaded = false;
-	
-	newconn = (struct netconn*)argument;
-	u32_t remoteaddr = newconn->pcb.ip->remote_ip.addr;
+		
+	u32_t remoteaddr = context->conn->pcb.ip->remote_ip.addr;
 	dprintf("%d: Accepting connection from %lu.%lu.%lu.%lu\n", 
-		conn,
-		(remoteaddr >> 24) & 0xFF,
-		(remoteaddr >> 16) & 0xFF,
+		context->connid,
+		remoteaddr & 0xFF,
 		(remoteaddr >> 8) & 0xFF,
-		remoteaddr & 0xFF);
+		(remoteaddr >> 16) & 0xFF,
+		(remoteaddr >> 24) & 0xFF);
 	
-	// We hook into our user queue (just one queue.. no matter how many users there are commands get handled one at a time...)
-	// and get command responses from it until we get a terminal response, at which case the connection closes.
-	if (UserSessionLoad(conn))
-	{
-		sessionLoaded = true;
-		while (UserSessionActive(conn))
-		{
-			char ch;
-			while (ch = UserSessionGetChar(conn))
-			{
-				// Send the char
-				err = netconn_write(newconn, &ch, sizeof(ch), NETCONN_NOCOPY);
-				if (err != ERR_OK)
-				{
-					dprintf("%d: netconn_write failed\n", err);
-					goto done;
-				}
-			}
-				
-			while (err = netconn_recv(newconn, &inbuf))
-			{
-				if (err == ERR_OK)
-				{
-					if (netconn_err(newconn) == ERR_OK) 
-					{
-						u16_t i;
-						netbuf_data(inbuf, (void**)&buf, &buflen);
-						for (i = 0; i < buflen; ++i)
-						{
-							// We have pending
-							if(!UserSessionPutChar(conn, ch))
-							{
-								goto done;
-							}
-						}
-					}
-				}
-				else if (err != ERR_TIMEOUT)
-				{
-					goto done;
-				}
-			}
-		}
-	}
+	UserSessionRun(context);
 	
-done:
-	dprintf("%d: Closing connection. netconn err=%d\n", conn, err);
+	dprintf("%d: Closing connection. netconn err=%d (%s)\n", context->connid, netconn_err(context->conn), lwip_strerr(netconn_err(context->conn)));
 	--conns;
 	assert(conns >= 0);
-	if (sessionLoaded)
-	{
-		UserSessionUnload(conn);	
-	}
 	
-	if (newconn)
+	if (context->conn)
 	{
-		if (err == ERR_OK)
+		if (netconn_err(context->conn) == ERR_OK)
 		{
 			// Only close if the conn is still open
-			netconn_close(newconn);	
+			netconn_close(context->conn);	
 		}
 		
-		netconn_delete(newconn);
+		netconn_delete(context->conn);
+	}
+	
+	if (context->buf)
+	{
+		netbuf_delete(context->buf);
+	}
+	
+	vPortFree(context);
+	
+	for (;;)
+	{
+		/* Delete the Init Thread */ 
+		osThreadTerminate(NULL);
+	}
+}
+
+void UserSessionRun(PUserContext Context)
+{
+	assert(Context);
+	if (Context)
+	{
+		// Pretty simple state machine that just keeps running apps until no more apps are selected
+		Context->NextApp = &EchoApp;
+		do
+		{
+			PUserApp nextApp = Context->NextApp;
+			Context->NextApp = NULL;
+			int err = nextApp->Run(Context);
+			dprintf("%d: %s exit code %d\n", Context->connid, nextApp->AppName, err);
+		} while (Context->NextApp);
 	}
 }
 
@@ -387,7 +427,12 @@ void DHCP_thread(void const * argument)
 					DHCP_state = DHCP_ADDRESS_ASSIGNED;	
           
 					LedError(ErrorCodeNone);
-					dprintf("DHCP address assigned\n");
+					u32_t addr = netif->ip_addr.addr;
+					dprintf("DHCP address changed to %lu.%lu.%lu.%lu\n", 
+						addr & 0xFF,
+						(addr >> 8) & 0xFF,
+						(addr >> 16) & 0xFF,
+						(addr >> 24) & 0xFF);
 				}
 				else
 				{

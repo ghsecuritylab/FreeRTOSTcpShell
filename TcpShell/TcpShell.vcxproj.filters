@@ -1482,10 +1482,7 @@
     <ClCompile Include="..\LwIP\src\netif\ppp\polarssl\sha1.c">
       <Filter>Source files\Device-specific files\lwIP\netif\ppp\polarssl</Filter>
     </ClCompile>
-    <ClCompile Include="User.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="LogonApp.c">
+    <ClCompile Include="EchoApp.c">
       <Filter>Source files</Filter>
     </ClCompile>
   </ItemGroup>

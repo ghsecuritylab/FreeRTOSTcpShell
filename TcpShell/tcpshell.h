@@ -8,14 +8,18 @@
 #define dprintf(...)
 #endif
 
+#include <queue.h>
+
 #ifndef __IO
 #define __IO volatile
 #endif
 
-// LED control to be used during command processing.
-void LedInit();
-void LedThinkingOn();
-void LedThinkingOff();
+// For telnet
+#define SERVER_PORT 23
+#define MAX_CONNECTIONS 4
+
+// Max username len
+#define USER_NAME_LEN 64
 
 // The param is the blink count, which is based on one of the error codes defined above.
 // The LED will keep blinking until the param is set to 0 or noerrro
@@ -28,20 +32,34 @@ typedef enum ErrorCode_t
 	ErrorCodeNetconnAcceptFailure = 4
 } ErrorCode;
 
+// These typedefs define the user and app context
+typedef struct UserContext_t UserContext, *PUserContext;
+
+typedef int(*PAppRun)(PUserContext);
+
+typedef struct UserApp_t
+{
+	const char* AppName;
+	PAppRun Run;
+} UserApp, *PUserApp;
+
+typedef struct UserContext_t
+{
+	struct netconn *conn;
+	unsigned int connid;
+	struct netbuf *buf;
+	char* ptr;
+	unsigned short remaining;
+	PUserApp NextApp;
+} UserContext, *PUserContext;
+
+// LED control to be used during command processing.
+void LedInit();
+void LedThinkingOn();
+void LedThinkingOff();
 void LedError(ErrorCode error);
 
-// User buffer control
-void UserInit(int maxConns);
-_Bool UserSessionLoad(int sessionId);
-_Bool UserSessionUnload(int sessionId);
-_Bool UserSessionActive(int sessionId);
-_Bool UserSessionPutChar(int sessionId, char ch);
-char UserSessionGetChar(int sessionId);
-
-// TCP/IP server control
-
-// For telnet
-#define SERVER_PORT 23
-#define MAX_CONNECTIONS 4
-
+// TCP/IP server control and I/O convenience functions
 void TcpInit(int port, int maxConns);
+int TcpPutchar(PUserContext context, char ch);
+int TcpGetchar(PUserContext context);

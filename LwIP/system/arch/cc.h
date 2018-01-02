@@ -35,6 +35,7 @@
 #include "cpu.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 typedef int sys_prot_t;
 
@@ -75,7 +76,7 @@ typedef int sys_prot_t;
 
 #endif
 
-#define LWIP_PLATFORM_ASSERT(x) //do { if(!(x)) while(1); } while(0)
+#define LWIP_PLATFORM_ASSERT(x) assert(x)
 
 #define LWIP_RAND() ((u32_t)rand())
 
