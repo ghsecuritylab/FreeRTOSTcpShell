@@ -103,7 +103,6 @@ static const size_t recvsize = 128;
 static void TcpThread(void const * argument);
 static void ServerThread(void const * argument);
 static void ConnectionThread(void const * argument);
-static void UserSessionRun(PUserContext Context);
 static void DHCP_thread(void const * argument);
 static void User_notification(struct netif *netif);
 static void Netif_Config(void);
@@ -124,56 +123,70 @@ void TcpInit(int port, int maxConns)
 	osThreadCreate(osThread(Tcp), NULL);
 }
 
-int TcpPutchar(PUserContext context, char ch)
+int TcpPutchar(char ch)
 {
-	err_t err;
-	// Send the char
-	err = netconn_write(context->conn, &ch, sizeof(ch), NETCONN_NOCOPY);
-	if (ERR_IS_FATAL(err))
-	{
-		dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, err, lwip_strerr(err));
-	}
-	
-	return err;
-}
-
-int TcpGetchar(PUserContext context)
-{
-	if (context->buf && context->remaining > 0)
-	{
-		char ch;
-		--context->remaining;
-		ch = *context->ptr;
-		++context->buf;
-		return ch;
-	}
-	else
+	PUserContext context = pvTaskGetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT);
+	assert(context);
+	if (context)
 	{
 		err_t err;
-	
-		if (context->buf)
+		// Send the char
+		err = netconn_write(context->conn, &ch, sizeof(ch), NETCONN_NOCOPY);
+		if (ERR_IS_FATAL(err))
 		{
-			netbuf_delete(context->buf);
+			dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, err, lwip_strerr(err));
 		}
-		
-		// Read more...
-		err = netconn_recv(context->conn, &context->buf);
-		if (err == ERR_OK) 
+	
+		return err;
+	}
+	
+	return -1;
+}
+
+int TcpGetchar()
+{
+	PUserContext context = pvTaskGetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT);
+	assert(context);
+	if (context)
+	{
+		if (context->buf && context->remaining > 0)
 		{
-			netbuf_data(context->buf, (void**)&context->ptr, &context->remaining);
+			char ch;
+			--context->remaining;
+			ch = *context->ptr++;
+			return ch;
 		}
 		else
 		{
-			if (ERR_IS_FATAL(err))
+			err_t err;
+	
+			if (context->buf)
 			{
-				dprintf("%d: netconn_recv failed: %d (%s)\n", context->connid, err, lwip_strerr(err));	
+				netbuf_delete(context->buf);
+				context->buf = NULL;
 			}
-			
-			return err;
-		}
 		
-		return TcpGetchar(context);
+			// Read more...
+			err = netconn_recv(context->conn, &context->buf);
+			if (err == ERR_OK) 
+			{
+				netbuf_data(context->buf, (void**)&context->ptr, &context->remaining);
+			}
+			else
+			{
+				if (ERR_IS_FATAL(err))
+				{
+					dprintf("%d: netconn_recv failed: %d (%s)\n", context->connid, err, lwip_strerr(err));	
+				}
+			
+				return err;
+			}
+		
+			return TcpGetchar(context);
+		}
 	}
+	
+	return -1;
 }
 
 /* Private functions ---------------------------------------------------------*/
@@ -276,7 +289,20 @@ void ConnectionThread(void const * argument)
 		(remoteaddr >> 16) & 0xFF,
 		(remoteaddr >> 24) & 0xFF);
 	
-	UserSessionRun(context);
+	// Pretty simple state machine that just keeps running apps until no more apps are selected
+	context->NextApp = &EchoApp;
+	vTaskSetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT, context);
+	
+	// Go through telnet negotiation
+	
+	
+	do
+	{
+		PUserApp nextApp = context->NextApp;
+		context->NextApp = NULL;
+		int err = nextApp->Run(context);
+		dprintf("%d: %s exit code %d\n", context->connid, nextApp->AppName, err);
+	} while (context->NextApp);
 	
 	dprintf("%d: Closing connection. netconn err=%d (%s)\n", context->connid, netconn_err(context->conn), lwip_strerr(netconn_err(context->conn)));
 	--conns;
@@ -304,23 +330,6 @@ void ConnectionThread(void const * argument)
 	{
 		/* Delete the Init Thread */ 
 		osThreadTerminate(NULL);
-	}
-}
-
-void UserSessionRun(PUserContext Context)
-{
-	assert(Context);
-	if (Context)
-	{
-		// Pretty simple state machine that just keeps running apps until no more apps are selected
-		Context->NextApp = &EchoApp;
-		do
-		{
-			PUserApp nextApp = Context->NextApp;
-			Context->NextApp = NULL;
-			int err = nextApp->Run(Context);
-			dprintf("%d: %s exit code %d\n", Context->connid, nextApp->AppName, err);
-		} while (Context->NextApp);
 	}
 }
 

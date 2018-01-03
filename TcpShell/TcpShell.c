@@ -83,11 +83,22 @@ void ETH_IRQHandler(void)
   */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-	printf("Assert failed: file %s on line %lu\r\n", file, line);
+	dprintf("Assert failed: file %s on line %lu\r\n", file, line);
+	LedError(ErrorApplicationAssertFailure);
+	asm("bkpt 255");
+	for (;;) ;
+}
 
-	while (1)
-	{
-	}
+#endif
+
+#if(  configCHECK_FOR_STACK_OVERFLOW > 0 )
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+{
+	dprintf("Stack overflow in task %s\r\n", pcTaskName);
+	LedError(ErrorApplicationStackOverflow);
+	asm("bkpt 255");
+	for (;;) ;
 }
 
 #endif

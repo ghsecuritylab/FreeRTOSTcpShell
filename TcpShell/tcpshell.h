@@ -9,6 +9,8 @@
 #endif
 
 #include <queue.h>
+#include "lwipopts.h"
+#include "FreeRTOSConfig.h"
 
 #ifndef __IO
 #define __IO volatile
@@ -16,7 +18,7 @@
 
 // For telnet
 #define SERVER_PORT 23
-#define MAX_CONNECTIONS 4
+#define MAX_CONNECTIONS (MEMP_NUM_TCP_PCB - 1)
 
 // Max username len
 #define USER_NAME_LEN 64
@@ -29,7 +31,9 @@ typedef enum ErrorCode_t
 	ErrorCodeEthAndLwipInit = 1,
 	ErrorCodeDhcpTimeout = 2,
 	ErrorCodeBrokeOutOfOsKernelStart = 3,
-	ErrorCodeNetconnAcceptFailure = 4
+	ErrorCodeNetconnAcceptFailure = 4,
+	ErrorApplicationStackOverflow = 5,
+	ErrorApplicationAssertFailure = 6
 } ErrorCode;
 
 // These typedefs define the user and app context
@@ -61,5 +65,7 @@ void LedError(ErrorCode error);
 
 // TCP/IP server control and I/O convenience functions
 void TcpInit(int port, int maxConns);
-int TcpPutchar(PUserContext context, char ch);
-int TcpGetchar(PUserContext context);
+
+// These are only meant to be called from the thread of a running app...
+int TcpPutchar(char ch);
+int TcpGetchar();

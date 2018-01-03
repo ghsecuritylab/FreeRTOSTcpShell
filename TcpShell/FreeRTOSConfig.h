@@ -85,6 +85,12 @@
  extern uint32_t SystemCoreClock;
 #endif
 
+#include <assert.h>
+#include "stm32f7xx_hal_conf.h"
+
+// TLS pointers
+#define TLS_USER_CONTEXT 0
+#define TLS_MAX          1
 
 #define configUSE_PREEMPTION			1
 #define configUSE_IDLE_HOOK			0
@@ -93,19 +99,20 @@
 #define configTICK_RATE_HZ			( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES			(  8 )
 #define configMINIMAL_STACK_SIZE		( ( uint16_t ) 128 )
-#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 15 * 1024 ) )
+#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 150 * 1024 ) )
 #define configMAX_TASK_NAME_LEN			( 16 )
 #define configUSE_TRACE_FACILITY		1
 #define configUSE_16_BIT_TICKS			0
 #define configIDLE_SHOULD_YIELD			1
 #define configUSE_MUTEXES			1
 #define configQUEUE_REGISTRY_SIZE		8
-#define configCHECK_FOR_STACK_OVERFLOW	        0
+#define configCHECK_FOR_STACK_OVERFLOW	        2
 #define configUSE_RECURSIVE_MUTEXES		1
 #define configUSE_MALLOC_FAILED_HOOK	        0
-#define configUSE_APPLICATION_TASK_TAG	        0
+#define configUSE_APPLICATION_TASK_TAG	        1
 #define configUSE_COUNTING_SEMAPHORES	        1
 #define configGENERATE_RUN_TIME_STATS	        0
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS TLS_MAX
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		        0
@@ -144,7 +151,7 @@ function. */
 routine that makes calls to interrupt safe FreeRTOS API functions.  DO NOT CALL
 INTERRUPT SAFE FREERTOS API FUNCTIONS FROM ANY INTERRUPT THAT HAS A HIGHER
 PRIORITY THAN THIS! (higher priorities are lower numeric values. */
-#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY	5
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY	TICK_INT_PRIORITY
 
 /* Interrupt priorities used by the kernel port layer itself.  These are generic
 to all Cortex-M ports, and do not rely on any particular library functions. */
@@ -155,7 +162,7 @@ See http://www.FreeRTOS.org/RTOS-Cortex-M3-M4.html. */
 	
 /* Normal assert() semantics without relying on the provision of an assert.h
 header file. */
-#define configASSERT( x ) if( ( x ) == 0 ) { taskDISABLE_INTERRUPTS(); for( ;; ); }	
+#define configASSERT( x ) assert(x)
 	
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
 standard names. */

@@ -65,32 +65,34 @@
 
 /* MEM_SIZE: the size of the heap memory. If the application will send
 a lot of data that needs to be copied, this should be set high. */
-#define MEM_SIZE                (10*1024)
+#define MEM_SIZE                (82*1024)
 
-/* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
-   sends a lot of data out of ROM (or other static memory), this
-   should be set high. */
-#define MEMP_NUM_PBUF           10
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
 #define MEMP_NUM_UDP_PCB        6
 /* MEMP_NUM_TCP_PCB: the number of simulatenously active TCP
    connections. */
-#define MEMP_NUM_TCP_PCB        10
+#define MEMP_NUM_TCP_PCB        5
 /* MEMP_NUM_TCP_PCB_LISTEN: the number of listening TCP
    connections. */
-#define MEMP_NUM_TCP_PCB_LISTEN 5
+#define MEMP_NUM_TCP_PCB_LISTEN 1
 /* MEMP_NUM_TCP_SEG: the number of simultaneously queued TCP
    segments. */
 #define MEMP_NUM_TCP_SEG        8
 /* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
    timeouts. */
-#define MEMP_NUM_SYS_TIMEOUT    10
+#define MEMP_NUM_SYS_TIMEOUT    (2 * (MEMP_NUM_TCP_SEG + MEMP_NUM_UDP_PCB))
 
 
 /* ---------- Pbuf options ---------- */
+
+/* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
+   sends a lot of data out of ROM (or other static memory), this
+   should be set high. */
+#define MEMP_NUM_PBUF           (MEMP_NUM_TCP_SEG + MEMP_NUM_UDP_PCB)
+
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
-#define PBUF_POOL_SIZE          8
+#define PBUF_POOL_SIZE          (MEMP_NUM_TCP_SEG + MEMP_NUM_UDP_PCB)
 
 /* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
 #define PBUF_POOL_BUFSIZE       1524
@@ -104,7 +106,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* Controls if TCP should queue segments that arrive out of
    order. Define to 0 if your device is low on memory. */
-#define TCP_QUEUE_OOSEQ         0
+#define TCP_QUEUE_OOSEQ         1
 
 /* TCP Maximum segment size. */
 #define TCP_MSS                 (1500 - 40)	  /* TCP_MSS = (Ethernet MTU - IP header size - TCP header size) */

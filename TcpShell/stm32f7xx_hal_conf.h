@@ -158,7 +158,7 @@
   * @brief This is the HAL system configuration section
   */     
 #define  VDD_VALUE                    3300U /*!< Value of VDD in mv */
-#define  TICK_INT_PRIORITY            0x0FU /*!< tick interrupt priority */
+#define  TICK_INT_PRIORITY            0x05U /*!< tick interrupt priority */
 #define  USE_RTOS                     0U
 #define  PREFETCH_ENABLE              1U
 #define  ART_ACCLERATOR_ENABLE        1U /* To enable instruction cache and prefetch */
@@ -168,7 +168,7 @@
   * @brief Uncomment the line below to expanse the "assert_param" macro in the 
   *        HAL drivers code
   */
-/* #define USE_FULL_ASSERT    1 */
+#define USE_FULL_ASSERT    1
 
 /* ################## Ethernet peripheral configuration ##################### */
 

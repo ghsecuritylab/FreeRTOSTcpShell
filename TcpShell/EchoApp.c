@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <queue.h>
 #include <stdarg.h>
 #include "tcpshell.h"
@@ -17,9 +18,10 @@ UserApp EchoApp = { "Echo", EchoAppRun };
 int EchoAppRun(PUserContext Context)
 {
 	int ch = 0;
-	while ((ch = TcpGetchar(Context)) > 0)
+	
+	while ((ch = TcpGetchar()) > 0)
 	{
-		if (TcpPutchar(Context, ch) != ERR_OK)
+		if (TcpPutchar(ch) != ERR_OK)
 		{
 			goto done;
 		}

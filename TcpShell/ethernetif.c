@@ -116,6 +116,9 @@ osSemaphoreId s_xSemaphore = NULL;
 /* Global Ethernet handle*/
 ETH_HandleTypeDef EthHandle;
 
+/* Do we want to make this programmable later? */
+__attribute__((section(".text"))) uint8_t macaddress[6] = { MAC_ADDR0, MAC_ADDR1, MAC_ADDR2, MAC_ADDR3, MAC_ADDR4, MAC_ADDR5 };
+
 /* Private function prototypes -----------------------------------------------*/
 static void ethernetif_input( void const * argument );
 
@@ -173,7 +176,8 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *heth)
   HAL_GPIO_Init(GPIOG, &GPIO_InitStructure);
   
   /* Enable the Ethernet global Interrupt */
-  HAL_NVIC_SetPriority(ETH_IRQn, 0x7, 0);
+  // Eth driver uses systick priority so we adjust this to be 1 more than systick priority
+  HAL_NVIC_SetPriority(ETH_IRQn, TICK_INT_PRIORITY + 1, 0);
   HAL_NVIC_EnableIRQ(ETH_IRQn);
   
   /* Enable ETHERNET clock  */
@@ -202,8 +206,6 @@ void HAL_ETH_RxCpltCallback(ETH_HandleTypeDef *heth)
   */
 static void low_level_init(struct netif *netif)
 {
-  uint8_t macaddress[6]= { MAC_ADDR0, MAC_ADDR1, MAC_ADDR2, MAC_ADDR3, MAC_ADDR4, MAC_ADDR5 };
-  
   EthHandle.Instance = ETH;  
   EthHandle.Init.MACAddr = macaddress;
   EthHandle.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
