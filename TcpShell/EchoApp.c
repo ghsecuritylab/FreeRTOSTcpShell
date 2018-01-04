@@ -19,15 +19,19 @@ int EchoAppRun(PUserContext Context)
 {
 	int ch = 0;
 	
-	while ((ch = TcpGetchar()) > 0)
+	console_setflags(Context, ConsoleFlagsEchoOff);
+	console_puts(Context, "Hello ");
+	console_printf(Context, "Welcome to %s\n", "shitty-echo-client");
+	while ((ch = console_getchar(Context)) > 0)
 	{
-		if (TcpPutchar(ch) != ERR_OK)
+		if (console_putchar(Context, ch) < 0)
 		{
 			goto done;
 		}
 	}
 	
 done:
+	console_unsetflags(Context, ConsoleFlagsEchoOff);
 	if (ch > 0)
 	{
 		ch = 0;

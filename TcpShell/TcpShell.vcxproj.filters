@@ -1485,6 +1485,9 @@
     <ClCompile Include="EchoApp.c">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="libtelnet.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tcpshell.h">
@@ -1500,6 +1503,9 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="User.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="libtelnet.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

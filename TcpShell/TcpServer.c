@@ -54,6 +54,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <queue.h>
+#include <stdarg.h>
 #include "tcpshell.h"
 #include "User.h"
 #include "ethernetif.h"
@@ -99,6 +100,17 @@ static unsigned int MaxConns = 0;
 static volatile unsigned int conns = 0;
 static const size_t recvsize = 128;
 
+static const telnet_telopt_t my_telopts[] = {
+	{ TELNET_TELOPT_ECHO, TELNET_WILL, TELNET_DONT },
+	{ TELNET_TELOPT_TTYPE, TELNET_WILL, TELNET_DONT },
+	{ TELNET_TELOPT_COMPRESS2, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_ZMP, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_MSSP, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_BINARY, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_NAWS, TELNET_WONT, TELNET_DONT },
+	{ -1, 0, 0 }
+};
+
 /* Private function prototypes -----------------------------------------------*/
 static void TcpThread(void const * argument);
 static void ServerThread(void const * argument);
@@ -106,6 +118,7 @@ static void ConnectionThread(void const * argument);
 static void DHCP_thread(void const * argument);
 static void User_notification(struct netif *netif);
 static void Netif_Config(void);
+static void my_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data);
 
 void TcpInit(int port, int maxConns)
 {
@@ -123,43 +136,28 @@ void TcpInit(int port, int maxConns)
 	osThreadCreate(osThread(Tcp), NULL);
 }
 
-int TcpPutchar(char ch)
+int console_getchar(PUserContext context)
 {
-	PUserContext context = pvTaskGetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT);
 	assert(context);
 	if (context)
 	{
-		err_t err;
-		// Send the char
-		err = netconn_write(context->conn, &ch, sizeof(ch), NETCONN_NOCOPY);
-		if (ERR_IS_FATAL(err))
+		for (;;)
 		{
-			dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, err, lwip_strerr(err));
-		}
-	
-		return err;
-	}
-	
-	return -1;
-}
-
-int TcpGetchar()
-{
-	PUserContext context = pvTaskGetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT);
-	assert(context);
-	if (context)
-	{
-		if (context->buf && context->remaining > 0)
-		{
-			char ch;
-			--context->remaining;
-			ch = *context->ptr++;
-			return ch;
-		}
-		else
-		{
+			// Purge the current buf until we get a new non-control char
+			context->newch = false;
+			while (context->buf && context->remaining > 0)
+			{
+				char ch = *context->ptr++;
+				--context->remaining;
+				telnet_recv(context->telnet, &ch, 1);
+				if (context->newch)
+				{
+					return ch;	
+				}
+			}
+			
+			// Uh oh. We purged our buf but didn't get a non-control char yet.
 			err_t err;
-	
 			if (context->buf)
 			{
 				netbuf_delete(context->buf);
@@ -181,12 +179,107 @@ int TcpGetchar()
 			
 				return err;
 			}
-		
-			return TcpGetchar(context);
 		}
+		
+		assert(false);
 	}
 	
-	return -1;
+	return 0;
+}
+
+int console_putchar(PUserContext context, char ch)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		telnet_send(context->telnet, (const char*)&ch, 1);
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_puts(PUserContext context, const char* str)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		telnet_send(context->telnet, str, strlen(str));
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_printf(PUserContext context, const char* fmt, ...)
+{
+	assert(context);
+	if (context)
+	{
+		va_list args;
+		va_start(args, fmt);
+		int rc = console_vprintf(context, fmt, args);
+		va_end(args);
+		return rc;
+	}
+	
+	return 0;
+}
+
+int console_vprintf(PUserContext context, const char* fmt, va_list args)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		int written = telnet_vprintf(context->telnet, fmt, args);
+		if (context->write_err == 0)
+		{
+			return written;
+		}
+		
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_setflags(PUserContext context, ConsoleFlags flags)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		if (flags & ConsoleFlagsEchoOff)
+		{
+			telnet_negotiate(context->telnet, TELNET_WILL, TELNET_TELOPT_ECHO);
+			telnet_negotiate(context->telnet, TELNET_WILL, TELNET_TELOPT_SGA);
+		}
+		
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_unsetflags(PUserContext context, ConsoleFlags flags)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		if (flags & ConsoleFlagsEchoOff)
+		{
+			telnet_negotiate(context->telnet, TELNET_WONT, TELNET_TELOPT_ECHO);
+			telnet_negotiate(context->telnet, TELNET_WONT, TELNET_TELOPT_SGA);
+		}
+		
+		return context->write_err;
+	}
+	
+	return 0;
 }
 
 /* Private functions ---------------------------------------------------------*/
@@ -199,7 +292,7 @@ void TcpThread(void const* argument)
 	Netif_Config();
   
 	/* Initialize server thread */
-	osThreadDef(TcpServer, ServerThread, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 2);
+	osThreadDef(TcpServer, ServerThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
 	osThreadCreate(osThread(TcpServer), &gnetif);
   
 	/* Notify user about the network interface config */
@@ -261,7 +354,7 @@ void ServerThread(void const * argument)
 							newContext->connid = conns;
 							netconn_set_recvbufsize(newconn, recvsize);
 							++conns;
-							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 2);
+							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
 							osThreadCreate(osThread(Connection), newContext);
 						}
 					}
@@ -291,18 +384,21 @@ void ConnectionThread(void const * argument)
 	
 	// Pretty simple state machine that just keeps running apps until no more apps are selected
 	context->NextApp = &EchoApp;
-	vTaskSetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT, context);
 	
 	// Go through telnet negotiation
-	
-	
-	do
-	{
-		PUserApp nextApp = context->NextApp;
-		context->NextApp = NULL;
-		int err = nextApp->Run(context);
-		dprintf("%d: %s exit code %d\n", context->connid, nextApp->AppName, err);
-	} while (context->NextApp);
+	context->telnet = telnet_init(my_telopts, my_event_handler, 0, context);
+	if(context->telnet)
+	{ 
+		do
+		{
+			PUserApp nextApp = context->NextApp;
+			context->NextApp = NULL;
+			int err = nextApp->Run(context);
+			dprintf("%d: %s exit code %d\n", context->connid, nextApp->AppName, err);
+		} while (context->NextApp);
+		
+		telnet_free(context->telnet);
+	}
 	
 	dprintf("%d: Closing connection. netconn err=%d (%s)\n", context->connid, netconn_err(context->conn), lwip_strerr(netconn_err(context->conn)));
 	--conns;
@@ -321,7 +417,7 @@ void ConnectionThread(void const * argument)
 	
 	if (context->buf)
 	{
-		netbuf_delete(context->buf);
+		netbuf_free(context->buf);
 	}
 	
 	vPortFree(context);
@@ -486,5 +582,42 @@ void DHCP_thread(void const * argument)
 	}
 }
 #endif  /* USE_DHCP */
+
+static void my_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data)
+{
+	PUserContext context = (PUserContext)user_data;
+	assert(context);
+	if (context)
+	{
+		// Telnet event handler stuff	
+		switch(ev->type) 
+		{
+		case TELNET_EV_DATA:
+			if (ev->data.size > 0)
+			{
+				context->newch = true;
+			}
+			
+			break;
+		case TELNET_EV_SEND:
+			{
+				if (context->write_err >= 0)
+				{
+					context->write_err = netconn_write(context->conn, ev->data.buffer, ev->data.size, NETCONN_NOCOPY);
+					if (ERR_IS_FATAL(context->write_err))
+					{
+						dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, context->write_err, lwip_strerr(context->write_err));
+					}
+				}
+			}
+			break;
+		case TELNET_EV_ERROR:
+			dprintf("%d: TELNET error: %s", context->connid, ev->error.msg);
+			break;
+		default:
+			break;
+		}
+	}
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

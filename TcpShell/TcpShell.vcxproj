@@ -60,10 +60,12 @@
     <ClCompile Include="EchoApp.c" />
     <ClCompile Include="ethernetif.c" />
     <ClCompile Include="Led.c" />
+    <ClCompile Include="libtelnet.c" />
     <ClCompile Include="TcpServer.c" />
     <ClCompile Include="TcpShell.c" />
     <ClCompile Include="system_stm32f7xx.c" />
     <ClInclude Include="ethernetif.h" />
+    <ClInclude Include="libtelnet.h" />
     <ClInclude Include="lwipopts.h" />
     <ClInclude Include="stm32_assert.h" />
     <ClInclude Include="tcpshell.h" />

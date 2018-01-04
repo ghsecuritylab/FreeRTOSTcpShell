@@ -11,6 +11,7 @@
 #include <queue.h>
 #include "lwipopts.h"
 #include "FreeRTOSConfig.h"
+#include "libtelnet.h"
 
 #ifndef __IO
 #define __IO volatile
@@ -18,10 +19,7 @@
 
 // For telnet
 #define SERVER_PORT 23
-#define MAX_CONNECTIONS (MEMP_NUM_TCP_PCB - 1)
-
-// Max username len
-#define USER_NAME_LEN 64
+#define MAX_CONNECTIONS 2
 
 // The param is the blink count, which is based on one of the error codes defined above.
 // The LED will keep blinking until the param is set to 0 or noerrro
@@ -33,8 +31,15 @@ typedef enum ErrorCode_t
 	ErrorCodeBrokeOutOfOsKernelStart = 3,
 	ErrorCodeNetconnAcceptFailure = 4,
 	ErrorApplicationStackOverflow = 5,
-	ErrorApplicationAssertFailure = 6
+	ErrorApplicationAssertFailure = 6,
+	ErrorApplicationOutOfMemory = 7
 } ErrorCode;
+
+typedef enum ConsoleFlags
+{
+	ConsoleFlagsNone    = 0x0,
+	ConsoleFlagsEchoOff = 0x1
+} ConsoleFlags;
 
 // These typedefs define the user and app context
 typedef struct UserContext_t UserContext, *PUserContext;
@@ -51,9 +56,12 @@ typedef struct UserContext_t
 {
 	struct netconn *conn;
 	unsigned int connid;
-	struct netbuf *buf;
+	struct telnet_t* telnet;
+	struct netbuf* buf; // TCP input and buffer
 	char* ptr;
 	unsigned short remaining;
+	int write_err;
+	bool newch;
 	PUserApp NextApp;
 } UserContext, *PUserContext;
 
@@ -66,6 +74,11 @@ void LedError(ErrorCode error);
 // TCP/IP server control and I/O convenience functions
 void TcpInit(int port, int maxConns);
 
-// These are only meant to be called from the thread of a running app...
-int TcpPutchar(char ch);
-int TcpGetchar();
+// Read and write a char of telnet input. Use this instead of telnet_recv as it properly reads data off the port and checks for errors.
+int console_getchar(PUserContext context);
+int console_putchar(PUserContext context, char ch);
+int console_puts(PUserContext context, const char* str);
+int console_printf(PUserContext context, const char* fmt, ...);
+int console_vprintf(PUserContext context, const char* fmt, va_list args);
+int console_setflags(PUserContext context, ConsoleFlags flags);
+int console_unsetflags(PUserContext context, ConsoleFlags flags);

@@ -117,7 +117,7 @@ osSemaphoreId s_xSemaphore = NULL;
 ETH_HandleTypeDef EthHandle;
 
 /* Do we want to make this programmable later? */
-__attribute__((section(".text"))) uint8_t macaddress[6] = { MAC_ADDR0, MAC_ADDR1, MAC_ADDR2, MAC_ADDR3, MAC_ADDR4, MAC_ADDR5 };
+const uint8_t macaddress[6] = { MAC_ADDR0, MAC_ADDR1, MAC_ADDR2, MAC_ADDR3, MAC_ADDR4, MAC_ADDR5 };
 
 /* Private function prototypes -----------------------------------------------*/
 static void ethernetif_input( void const * argument );
@@ -207,7 +207,7 @@ void HAL_ETH_RxCpltCallback(ETH_HandleTypeDef *heth)
 static void low_level_init(struct netif *netif)
 {
   EthHandle.Instance = ETH;  
-  EthHandle.Init.MACAddr = macaddress;
+  EthHandle.Init.MACAddr = (uint8_t*)macaddress;
   EthHandle.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
   EthHandle.Init.Speed = ETH_SPEED_100M;
   EthHandle.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
@@ -333,7 +333,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
   }
 
   /* Clean and Invalidate data cache */
-  SCB_CleanInvalidateDCache();  
+  //SCB_CleanInvalidateDCache();  
   /* Prepare transmit descriptors to give to DMA */ 
   HAL_ETH_TransmitFrame(&EthHandle, framelength);
   
@@ -387,7 +387,7 @@ static struct pbuf * low_level_input(struct netif *netif)
   }
   
   /* Clean and Invalidate data cache */
-  SCB_CleanInvalidateDCache();
+  //SCB_CleanInvalidateDCache();
   
   if (p != NULL)
   {

@@ -65,11 +65,12 @@
 
 /* MEM_SIZE: the size of the heap memory. If the application will send
 a lot of data that needs to be copied, this should be set high. */
-#define MEM_SIZE                (82*1024)
+#define MEM_SIZE                (40*1024)
 
+#define MEMP_OVERFLOW_CHECK     2
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
-#define MEMP_NUM_UDP_PCB        6
+#define MEMP_NUM_UDP_PCB        5
 /* MEMP_NUM_TCP_PCB: the number of simulatenously active TCP
    connections. */
 #define MEMP_NUM_TCP_PCB        5
@@ -106,7 +107,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* Controls if TCP should queue segments that arrive out of
    order. Define to 0 if your device is low on memory. */
-#define TCP_QUEUE_OOSEQ         1
+#define TCP_QUEUE_OOSEQ         0
 
 /* TCP Maximum segment size. */
 #define TCP_MSS                 (1500 - 40)	  /* TCP_MSS = (Ethernet MTU - IP header size - TCP header size) */
@@ -129,6 +130,8 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- DHCP options ---------- */
 #define LWIP_DHCP               1
+#define LWIP_AUTOIP             1
+#define LWIP_DHCP_AUTOIP_COOP   1
 
 
 /* ---------- UDP options ---------- */

@@ -47,7 +47,7 @@ int main(void)
 	     - Global MSP (MCU Support Package) initialization
 	*/
 	dprintf("TcpShell: Init code. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
-	HAL_Init();  
+	HAL_Init();
 	LedInit();
 	TcpInit(SERVER_PORT, MAX_CONNECTIONS);
   
@@ -102,5 +102,13 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 }
 
 #endif
+
+void vApplicationMallocFailedHook(void)
+{
+	dprintf("malloc failed\r\n");
+	LedError(ErrorApplicationOutOfMemory);
+	asm("bkpt 255");
+	for (;;) ;
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
