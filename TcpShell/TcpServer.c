@@ -99,6 +99,8 @@ static int Port = 0;
 static unsigned int MaxConns = 0;
 static volatile unsigned int conns = 0;
 static const size_t recvsize = 128;
+static unsigned short nextconn = 0;
+const char hostname[64] = "hostname";
 
 static const telnet_telopt_t my_telopts[] = {
 	{ TELNET_TELOPT_ECHO, TELNET_WILL, TELNET_DONT },
@@ -285,6 +287,8 @@ int console_unsetflags(PUserContext context, ConsoleFlags flags)
 /* Private functions ---------------------------------------------------------*/
 void TcpThread(void const* argument)
 {
+	dprintf("Hostname is '%s', MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", hostname, macaddress[0], macaddress[1], macaddress[2], macaddress[3], macaddress[4], macaddress[5]);
+
 	/* Create tcp_ip stack thread */
 	tcpip_init(NULL, NULL);
   
@@ -351,7 +355,7 @@ void ServerThread(void const * argument)
 						{
 							memset(newContext, 0, sizeof(UserContext));
 							newContext->conn = newconn;
-							newContext->connid = conns;
+							newContext->connid = (unsigned int)nextconn++;
 							netconn_set_recvbufsize(newconn, recvsize);
 							++conns;
 							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
@@ -455,6 +459,11 @@ static void Netif_Config(void)
   
 	/*  Registers the default network interface. */
 	netif_set_default(&gnetif);
+	
+#if LWIP_NETIF_HOSTNAME == 1
+	/* Sets the interface hostname */
+	netif_set_hostname(&gnetif, hostname);
+#endif // LWIP_NETIF_HOSTNAME
   
 	if (netif_is_link_up(&gnetif))
 	{
@@ -603,7 +612,7 @@ static void my_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_da
 			{
 				if (context->write_err >= 0)
 				{
-					context->write_err = netconn_write(context->conn, ev->data.buffer, ev->data.size, NETCONN_NOCOPY);
+					context->write_err = netconn_write(context->conn, ev->data.buffer, ev->data.size, NETCONN_COPY);
 					if (ERR_IS_FATAL(context->write_err))
 					{
 						dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, context->write_err, lwip_strerr(context->write_err));

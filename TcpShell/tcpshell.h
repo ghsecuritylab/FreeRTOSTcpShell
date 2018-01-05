@@ -19,7 +19,11 @@
 
 // For telnet
 #define SERVER_PORT 23
-#define MAX_CONNECTIONS 2
+#define MAX_CONNECTIONS 4
+#define MAX_HOSTNAME_LEN 64
+
+extern const char hostname[MAX_HOSTNAME_LEN];
+extern const uint8_t macaddress[6];
 
 // The param is the blink count, which is based on one of the error codes defined above.
 // The LED will keep blinking until the param is set to 0 or noerrro

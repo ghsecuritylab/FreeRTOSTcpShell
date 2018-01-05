@@ -32,6 +32,11 @@
 #include "tcpshell.h"
 
 extern ETH_HandleTypeDef EthHandle;
+extern ETH_DMADescTypeDef* DMARxDscrTab;
+extern ETH_DMADescTypeDef* DMATxDscrTab;
+
+static void MPU_Config(void);
+static void CPU_CACHE_Enable(void);
 
 /**
   * @brief  Main program
@@ -47,6 +52,14 @@ int main(void)
 	     - Global MSP (MCU Support Package) initialization
 	*/
 	dprintf("TcpShell: Init code. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
+	
+	/* Configure the MPU attributes as Device memory for ETH DMA descriptors */
+	MPU_Config();
+  
+	/* Enable the CPU Cache */
+	CPU_CACHE_Enable();
+	
+	/* HAL and function init code */
 	HAL_Init();
 	LedInit();
 	TcpInit(SERVER_PORT, MAX_CONNECTIONS);
@@ -59,7 +72,6 @@ int main(void)
 	/* We should never get here as control is now taken by the scheduler */
 	dprintf("TcpShell: Broke out of osKernelStart()\n");
 	LedError(ErrorCodeBrokeOutOfOsKernelStart);
-	for (;;) ;
 }
 
 void SysTick_Handler(void)
@@ -71,6 +83,67 @@ void SysTick_Handler(void)
 void ETH_IRQHandler(void)
 {
 	HAL_ETH_IRQHandler(&EthHandle);
+}
+
+/**
+  * @brief  Configure the MPU attributes as Device for  Ethernet Descriptors in the SRAM1.
+  * @note   The Base Address is 0x20010000 since this memory interface is the AXI.
+  *         The Configured Region Size is 256B (size of Rx and Tx ETH descriptors) 
+  *       
+  * @param  None
+  * @retval None
+  */
+static void MPU_Config(void)
+{
+	MPU_Region_InitTypeDef MPU_InitStruct;
+  
+	/* Disable the MPU */
+	HAL_MPU_Disable();
+  
+	/* Configure the MPU attributes as Device for Ethernet Descriptors in the SRAM */
+	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+	MPU_InitStruct.BaseAddress = (uint32_t)&DMARxDscrTab[0];
+	MPU_InitStruct.Size = MPU_REGION_SIZE_128B;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
+  
+	/* Configure the MPU attributes as Device for Ethernet Descriptors in the SRAM */
+	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+	MPU_InitStruct.BaseAddress = (uint32_t)&DMATxDscrTab[0];
+	MPU_InitStruct.Size = MPU_REGION_SIZE_128B;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+	/* Enable the MPU */
+	HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+
+/**
+  * @brief  CPU L1-Cache enable.
+  * @param  None
+  * @retval None
+  */
+static void CPU_CACHE_Enable(void)
+{
+	/* Enable I-Cache */
+	SCB_EnableICache();
+
+	/* Enable D-Cache */
+	SCB_EnableDCache();
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -86,7 +159,6 @@ void assert_failed(uint8_t* file, uint32_t line)
 	dprintf("Assert failed: file %s on line %lu\r\n", file, line);
 	LedError(ErrorApplicationAssertFailure);
 	asm("bkpt 255");
-	for (;;) ;
 }
 
 #endif
@@ -98,7 +170,6 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 	dprintf("Stack overflow in task %s\r\n", pcTaskName);
 	LedError(ErrorApplicationStackOverflow);
 	asm("bkpt 255");
-	for (;;) ;
 }
 
 #endif
@@ -108,7 +179,6 @@ void vApplicationMallocFailedHook(void)
 	dprintf("malloc failed\r\n");
 	LedError(ErrorApplicationOutOfMemory);
 	asm("bkpt 255");
-	for (;;) ;
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -107,7 +107,7 @@ ETH_DMADescTypeDef  DMATxDscrTab[ETH_TXBUFNB] __attribute__((section(".TxDescrip
 uint8_t Rx_Buff[ETH_RXBUFNB][ETH_RX_BUF_SIZE] __attribute__((section(".RxarraySection"))); /* Ethernet Receive Buffer */
 
 uint8_t Tx_Buff[ETH_TXBUFNB][ETH_TX_BUF_SIZE] __attribute__((section(".TxarraySection"))); /* Ethernet Transmit Buffer */
-
+ 
 #endif
 
 /* Semaphore to signal incoming packets */
@@ -121,8 +121,19 @@ const uint8_t macaddress[6] = { MAC_ADDR0, MAC_ADDR1, MAC_ADDR2, MAC_ADDR3, MAC_
 
 /* Private function prototypes -----------------------------------------------*/
 static void ethernetif_input( void const * argument );
+static inline void CleanAndInvalidateDmaLinesFromDCache(void);
 
 /* Private functions ---------------------------------------------------------*/
+
+static inline void CleanAndInvalidateDmaLinesFromDCache(void)
+{
+	// Clear and invalidate the Rx and Dx DMA lines from cache
+	SCB_CleanInvalidateDCache_by_Addr((uint32_t*)&DMARxDscrTab[0], sizeof(DMARxDscrTab));
+	SCB_CleanInvalidateDCache_by_Addr((uint32_t*)&DMATxDscrTab[0], sizeof(DMATxDscrTab));
+	SCB_CleanInvalidateDCache_by_Addr((uint32_t*)&Rx_Buff[0], sizeof(Rx_Buff));
+	SCB_CleanInvalidateDCache_by_Addr((uint32_t*)&Tx_Buff[0], sizeof(Tx_Buff));
+}
+	
 /*******************************************************************************
                        Ethernet MSP Routines
 *******************************************************************************/
@@ -333,7 +344,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
   }
 
   /* Clean and Invalidate data cache */
-  //SCB_CleanInvalidateDCache();  
+  CleanAndInvalidateDmaLinesFromDCache(); 
   /* Prepare transmit descriptors to give to DMA */ 
   HAL_ETH_TransmitFrame(&EthHandle, framelength);
   
@@ -387,7 +398,7 @@ static struct pbuf * low_level_input(struct netif *netif)
   }
   
   /* Clean and Invalidate data cache */
-  //SCB_CleanInvalidateDCache();
+  CleanAndInvalidateDmaLinesFromDCache();
   
   if (p != NULL)
   {
