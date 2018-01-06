@@ -100,7 +100,7 @@ static unsigned int MaxConns = 0;
 static volatile unsigned int conns = 0;
 static const size_t recvsize = 128;
 static unsigned short nextconn = 0;
-const char hostname[64] = "hostname";
+const char hostname[MAX_HOSTNAME_LEN] = "hostname";
 
 static const telnet_telopt_t my_telopts[] = {
 	{ TELNET_TELOPT_ECHO, TELNET_WILL, TELNET_DONT },
@@ -284,6 +284,253 @@ int console_unsetflags(PUserContext context, ConsoleFlags flags)
 	return 0;
 }
 
+int console_tokenize(PUserContext context, const char* arguments)
+{
+	// Very rudimentary console argument parser...
+	int rc = 0;
+	int argv_i;
+	int start;
+	int ch_i;
+	size_t sizeArguments;
+	bool escapeNext = false;
+	assert(context && arguments);
+	if (context && arguments)
+	{
+		if (!strncpy(context->arguments, arguments, sizeof(context->arguments)))
+		{
+			rc = -1;
+			goto done;
+		}
+		
+		sizeArguments = strlen(arguments);
+		start = argv_i = ch_i = 0;
+		for (; argv_i < MAX_ARGUMENTS_LEN && ch_i < sizeArguments; ++ch_i)
+		{
+			if (context->arguments[ch_i] == '^')
+			{
+				escapeNext = true;
+			}
+			else
+			{
+				if (escapeNext)
+				{
+					escapeNext = false;
+				}
+				else if (context->arguments[ch_i] == ' ')
+				{
+					while (ch_i < sizeArguments && context->arguments[ch_i] == ' ')
+					{
+						context->arguments[ch_i++] = 0;
+					}
+				
+					if (argv_i < MAX_ARGUMENTS_LEN)
+					{
+						context->argv[argv_i++] = &context->arguments[start];
+					}
+				
+					if (ch_i < sizeArguments)
+					{
+						start = ch_i;
+					}
+				}
+			}
+		}
+		
+		if (argv_i >= MAX_ARGUMENTS_LEN)
+		{
+			rc = -1;
+			goto done;
+		}
+		
+		if (argv_i < MAX_ARGUMENTS_LEN)
+		{
+			// Any remaining goes to argv_i
+			context->argv[argv_i++] = &context->arguments[start];
+		}
+		
+		context->argc = argv_i;
+	}
+	
+done:
+	if (rc != 0)
+	{
+		memset(context->arguments, 0, sizeof(context->arguments));
+		memset(context->argv, 0, sizeof(context->argv));
+		context->argc = 0;
+		return rc;
+	}
+	
+	return ch_i;
+}
+
+int console_exec(PUserContext context, const PUserApp app)
+{
+	assert(context && app);
+	if (context && app)
+	{
+		assert(!context->NextApp);
+		context->NextApp = app;
+	}
+	
+	return 0;
+}
+
+int console_getenv(PUserContext context, const char* name, const char** value)
+{
+	PUserEnvironment cur = context->env;
+	assert(context && name && value);
+	if (context && name && value)
+	{
+		while (cur)
+		{
+			if (strcmp(cur->Name, name) == 0)
+			{
+				*value = cur->Value;
+				return 0;
+			}
+			
+			cur = cur->Next;
+		}
+		
+		return -1;
+	}
+	
+	return 0;
+}
+
+int console_setenv(PUserContext context, const char* name, char* value)
+{
+	PUserEnvironment cur = context->env;
+	assert(context && name);
+	if (context && name)
+	{
+		if (!value)
+		{
+			return console_unsetenv(context, name);
+		}
+		
+		while (cur)
+		{
+			if (strcmp(cur->Name, name) == 0)
+			{
+				strncpy(cur->Value, value, sizeof(cur->Value));
+				return 0;
+			}
+			
+			cur = cur->Next;
+		}
+		
+		PUserEnvironment first = pvPortMalloc(sizeof(UserEnvironment));
+		if (first)
+		{
+			// Prepend it to the environment block
+			memset(first, 0, sizeof(UserEnvironment));	
+			strncpy(first->Name, name, sizeof(first->Name));
+			strncpy(first->Value, value, sizeof(first->Value));
+			first->Next = context->env;
+			context->env = first;
+		}
+		else
+		{
+			// Uh oh. Out of memory.
+			return - 1;
+		}
+	}
+	
+	return 0;
+}
+
+int console_unsetenv(PUserContext context, const char* name)
+{
+	PUserEnvironment prev = NULL;
+	PUserEnvironment cur = context->env;
+	assert(context && name);
+	if (context && name)
+	{
+		while (cur)
+		{
+			if (strcmp(cur->Name, name) == 0)
+			{
+				goto delete;
+			}
+			
+			prev = cur;
+			cur = cur->Next;
+		}
+		
+		return -1;
+	}
+	
+delete:
+	if (prev)
+	{
+		prev->Next = cur->Next;
+		vPortFree(cur);
+	}
+	else
+	{
+		vPortFree(context->env);
+		context->env = cur;
+	}
+	
+	return 0;
+}
+
+int console_getline(PUserContext context, ConsoleFlags flags, char* line, size_t len)
+{
+	int rc = 0;
+	int off = 0;
+	assert(context);
+	if (context)
+	{
+		memset(line, 0, len);
+		while (off < len && (rc = console_getchar(context)) >= 0)
+		{
+			if (rc == '\b')
+			{
+				if (off > 0)
+				{
+					--off;	
+				}
+				else
+				{
+					continue;
+				}
+			}
+		
+			if (off < len)
+			{
+				char ch = rc;
+				if (flags && ConsoleFlagsEchoOff)
+				{
+					if ((rc = console_putchar(context, ch)) < 0)
+					{
+						goto done;
+					}	
+				}
+				
+				if (ch == '\n')
+				{
+					line[off++] = 0;
+					break;
+				}
+				else if (ch != '\b' && ch != '\r')
+				{
+					line[off++] = ch;	
+				}
+			}
+		}
+	}
+	
+done:
+	if (rc < 0)
+	{
+		return rc;
+	}
+	
+	return off;
+}
+
 /* Private functions ---------------------------------------------------------*/
 void TcpThread(void const* argument)
 {
@@ -358,7 +605,7 @@ void ServerThread(void const * argument)
 							newContext->connid = (unsigned int)nextconn++;
 							netconn_set_recvbufsize(newconn, recvsize);
 							++conns;
-							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
+							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
 							osThreadCreate(osThread(Connection), newContext);
 						}
 					}
@@ -386,27 +633,33 @@ void ConnectionThread(void const * argument)
 		(remoteaddr >> 16) & 0xFF,
 		(remoteaddr >> 24) & 0xFF);
 	
-	// Pretty simple state machine that just keeps running apps until no more apps are selected
-	context->NextApp = &EchoApp;
-	
 	// Go through telnet negotiation
 	context->telnet = telnet_init(my_telopts, my_event_handler, 0, context);
+	context->NextApp = (PUserApp)&LogonApp;
 	if(context->telnet)
 	{ 
-		do
+		while (!context->exiting)
 		{
 			PUserApp nextApp = context->NextApp;
+			if (nextApp == NULL)
+			{
+				nextApp = (PUserApp)&ShellApp;
+			}
+
 			context->NextApp = NULL;
-			int err = nextApp->Run(context);
+			dprintf("%d: exec %s ('%s' with argc=%d)\n", context->connid, nextApp->AppName, context->arguments, context->argc);
+			int err = nextApp->Run(context, context->argc, context->argv);
 			dprintf("%d: %s exit code %d\n", context->connid, nextApp->AppName, err);
-		} while (context->NextApp);
+			char errstr[10] = { };
+			itoa(err, errstr, sizeof(errstr));
+			if ((err = console_setenv(context, ENV_ERROR, errstr)) < 0)
+			{
+				dprintf("%d: console_setenv(," ENV_ERROR ",) failed with rc=%d", context->connid , err);
+			}
+		}
 		
 		telnet_free(context->telnet);
 	}
-	
-	dprintf("%d: Closing connection. netconn err=%d (%s)\n", context->connid, netconn_err(context->conn), lwip_strerr(netconn_err(context->conn)));
-	--conns;
-	assert(conns >= 0);
 	
 	if (context->conn)
 	{
@@ -424,7 +677,22 @@ void ConnectionThread(void const * argument)
 		netbuf_free(context->buf);
 	}
 	
+	if (context->env)
+	{
+		PUserEnvironment cur = context->env;
+		while (cur)
+		{
+			PUserEnvironment next = cur->Next;
+			vPortFree(cur);
+			cur = next;
+		}
+	}
+	
 	vPortFree(context);
+	
+	dprintf("%d: Closing connection. netconn err=%d (%s)\n", context->connid, netconn_err(context->conn), lwip_strerr(netconn_err(context->conn)));
+	--conns;
+	assert(conns >= 0);
 	
 	for (;;)
 	{

@@ -59,11 +59,20 @@
   <ItemGroup>
     <ClCompile Include="EchoApp.c" />
     <ClCompile Include="ethernetif.c" />
+    <ClCompile Include="ExitApp.c" />
+    <ClCompile Include="HelpApp.c" />
+    <ClCompile Include="HostnameApp.c" />
     <ClCompile Include="Led.c" />
     <ClCompile Include="libtelnet.c" />
+    <ClCompile Include="LogonApp.c" />
+    <ClCompile Include="MacApp.c" />
+    <ClCompile Include="ResetApp.c" />
+    <ClCompile Include="SetApp.c" />
+    <ClCompile Include="ShellApp.c" />
     <ClCompile Include="TcpServer.c" />
     <ClCompile Include="TcpShell.c" />
     <ClCompile Include="system_stm32f7xx.c" />
+    <ClCompile Include="User.c" />
     <ClInclude Include="ethernetif.h" />
     <ClInclude Include="libtelnet.h" />
     <ClInclude Include="lwipopts.h" />

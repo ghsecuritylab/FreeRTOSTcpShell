@@ -51,6 +51,8 @@
 #include "netif/etharp.h"
 #include "ethernetif.h"
 #include <string.h>
+#include <stdbool.h>
+#include "tcpshell.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -117,7 +119,7 @@ osSemaphoreId s_xSemaphore = NULL;
 ETH_HandleTypeDef EthHandle;
 
 /* Do we want to make this programmable later? */
-const uint8_t macaddress[6] = { MAC_ADDR0, MAC_ADDR1, MAC_ADDR2, MAC_ADDR3, MAC_ADDR4, MAC_ADDR5 };
+const uint8_t macaddress[MAX_MACADDR_LEN] = { MAC_ADDR0, MAC_ADDR1, MAC_ADDR2, MAC_ADDR3, MAC_ADDR4, MAC_ADDR5 };
 
 /* Private function prototypes -----------------------------------------------*/
 static void ethernetif_input( void const * argument );

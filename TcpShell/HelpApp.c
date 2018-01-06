@@ -11,22 +11,21 @@
 #include "tcpshell.h"
 #include "User.h"
 	
-static int EchoAppRun(PUserContext, int, char**);
+static int HelpAppRun(PUserContext, int, char**);
 
-const UserApp EchoApp = { "echo", EchoAppRun, "[text1 [text2 [...]]]", "Echos some text to the terminal." };
+const UserApp HelpApp = { "help", HelpAppRun, "", "Displays command help" };
 
-int EchoAppRun(PUserContext Context, int argc, char** argv)
+int HelpAppRun(PUserContext Context, int argc, char** argv)
 {
 	int rc = 0;
+	int i;
 	
 	console_setflags(Context, ConsoleFlagsEchoOff);
-	for (int i = 1; i < argc; ++i)
+	for (i = 0; i < MAX_USERAPP; ++i)
 	{
-		console_puts(Context, argv[i]);
-		console_puts(Context, " ");
+		PUserApp app = AppList[i];
+		console_printf(Context, "%8s %25s - %s\r\n", app->AppName, app->ArgUsage, app->Description);
 	}
-	
-	console_puts(Context, "\r\n");
 	
 done:
 	console_unsetflags(Context, ConsoleFlagsEchoOff);

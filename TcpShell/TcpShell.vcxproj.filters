@@ -1488,6 +1488,33 @@
     <ClCompile Include="libtelnet.c">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="ShellApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="LogonApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="User.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="HelpApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExitApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="HostnameApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="MacApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResetApp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tcpshell.h">

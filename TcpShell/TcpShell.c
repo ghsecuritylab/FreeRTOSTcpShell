@@ -34,6 +34,7 @@
 extern ETH_HandleTypeDef EthHandle;
 extern ETH_DMADescTypeDef* DMARxDscrTab;
 extern ETH_DMADescTypeDef* DMATxDscrTab;
+SemaphoreHandle_t SystemSemaphore;
 
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
@@ -62,6 +63,9 @@ int main(void)
 	/* HAL and function init code */
 	HAL_Init();
 	LedInit();
+	
+	SystemSemaphore = xSemaphoreCreateBinary();
+	xSemaphoreGive(SystemSemaphore);
 	TcpInit(SERVER_PORT, MAX_CONNECTIONS);
   
 	/* Start scheduler */

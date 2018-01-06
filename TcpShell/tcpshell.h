@@ -17,13 +17,18 @@
 #define __IO volatile
 #endif
 
-// For telnet
-#define SERVER_PORT 23
-#define MAX_CONNECTIONS 4
-#define MAX_HOSTNAME_LEN 64
+#define SERVER_PORT       23
+#define MAX_CONNECTIONS   4
+#define MAX_HOSTNAME_LEN  128
+#define MAX_MACADDR_LEN   6
+#define MAX_USERNAME_LEN  128
+#define MAX_ENV_LEN       32
+#define MAX_ARGV          9
+#define MAX_ARGUMENTS_LEN 200
+#define MAX_USERENVIROMNENT_LEN 100
 
 extern const char hostname[MAX_HOSTNAME_LEN];
-extern const uint8_t macaddress[6];
+extern const uint8_t macaddress[MAX_MACADDR_LEN];
 
 // The param is the blink count, which is based on one of the error codes defined above.
 // The LED will keep blinking until the param is set to 0 or noerrro
@@ -48,25 +53,45 @@ typedef enum ConsoleFlags
 // These typedefs define the user and app context
 typedef struct UserContext_t UserContext, *PUserContext;
 
-typedef int(*PAppRun)(PUserContext);
+typedef int(*PAppRun)(PUserContext, int argc, char** argv);
 
 typedef struct UserApp_t
 {
 	const char* AppName;
 	PAppRun Run;
+	const char* ArgUsage;
+	const char* Description;
 } UserApp, *PUserApp;
+
+typedef struct UserEnvironment_t
+{
+	// Caller owns variable name
+	char Name[MAX_ENV_LEN];
+	char Value[MAX_USERENVIROMNENT_LEN];
+	struct UserEnvironment_t* Next;
+} UserEnvironment, *PUserEnvironment;
 
 typedef struct UserContext_t
 {
+	// TCP/IP session stuff
 	struct netconn *conn;
 	unsigned int connid;
+	bool exiting;
+	
+	// I/O related stuff
 	struct telnet_t* telnet;
 	struct netbuf* buf; // TCP input and buffer
 	char* ptr;
 	unsigned short remaining;
 	int write_err;
 	bool newch;
+	
+	// App stuff
 	PUserApp NextApp;
+	int argc;
+	char* argv[MAX_ARGV];
+	char arguments[MAX_ARGUMENTS_LEN];
+	PUserEnvironment env;
 } UserContext, *PUserContext;
 
 // LED control to be used during command processing.
@@ -86,3 +111,9 @@ int console_printf(PUserContext context, const char* fmt, ...);
 int console_vprintf(PUserContext context, const char* fmt, va_list args);
 int console_setflags(PUserContext context, ConsoleFlags flags);
 int console_unsetflags(PUserContext context, ConsoleFlags flags);
+int console_tokenize(PUserContext context, const char* arguments);
+int console_exec(PUserContext context, const PUserApp app);
+int console_getenv(PUserContext context, const char* name, const char** value);
+int console_setenv(PUserContext context, const char* name, char* value);
+int console_unsetenv(PUserContext context, const char* name);
+int console_getline(PUserContext context, ConsoleFlags flags, char* line, size_t len);
