@@ -27,6 +27,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stm32f7xx_hal.h>
+#include <stm32f7xx_hal_pwr.h>
+#include <stm32f7xx_hal_rtc.h>
 #include <../CMSIS_RTOS/cmsis_os.h>
 #include <stdbool.h>
 #include "tcpshell.h"
@@ -34,9 +36,13 @@
 extern ETH_HandleTypeDef EthHandle;
 extern ETH_DMADescTypeDef* DMARxDscrTab;
 extern ETH_DMADescTypeDef* DMATxDscrTab;
+RTC_HandleTypeDef RtcHandle = { };
 SemaphoreHandle_t SystemSemaphore;
+extern volatile unsigned int conns;
+extern unsigned int MaxConns;
 
 static void MPU_Config(void);
+static void RTC_Config(void);
 static void CPU_CACHE_Enable(void);
 
 /**
@@ -62,6 +68,14 @@ int main(void)
 	
 	/* HAL and function init code */
 	HAL_Init();
+	
+	/* Configure the power management and RTC functions */
+	HAL_PWR_DisableSleepOnExit();
+	
+	RTC_Config();
+	
+	/* Configure the RNG */
+	
 	LedInit();
 	
 	SystemSemaphore = xSemaphoreCreateBinary();
@@ -136,6 +150,17 @@ static void MPU_Config(void)
 	HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 }
 
+static void RTC_Config(void)
+{
+	RtcHandle.Instance = RTC;
+	RtcHandle.Init.AsynchPrediv = 0x7f;
+	RtcHandle.Init.SynchPrediv = 0x7fff;
+	RtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
+	RtcHandle.Init.OutPut = RTC_OUTPUT_WAKEUP;
+	RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	HAL_RTC_Init(&RtcHandle);
+}
+
 /**
   * @brief  CPU L1-Cache enable.
   * @param  None
@@ -150,6 +175,29 @@ static void CPU_CACHE_Enable(void)
 	SCB_EnableDCache();
 }
 
+void vApplicationIdleHook(void)
+{
+	// Configure the MCU into sleep mode with a wakeup alarm to check for more non-ISR work to do in 10ish ms.
+	if(HAL_OK == HAL_RTCEx_SetWakeUpTimer(&RtcHandle, 0xCC, RTC_WAKEUPCLOCK_RTCCLK_DIV16))
+	{
+		if (conns > 0)
+		{
+			HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+		}
+		else
+		{
+			// Put us into stop mode for the next connection request.
+			assert(conns == 0);
+			if (conns == 0)
+			{
+				HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);	
+			}
+		}
+	
+		HAL_RTCEx_DeactivateWakeUpTimer(&RtcHandle);
+	}
+}
+
 #ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
@@ -161,7 +209,6 @@ static void CPU_CACHE_Enable(void)
 void assert_failed(uint8_t* file, uint32_t line)
 {
 	dprintf("Assert failed: file %s on line %lu\r\n", file, line);
-	LedError(ErrorApplicationAssertFailure);
 	asm("bkpt 255");
 }
 

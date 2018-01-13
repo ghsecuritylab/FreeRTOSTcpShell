@@ -96,8 +96,8 @@ __IO uint8_t DHCP_state = DHCP_OFF;
 #endif
 struct netif gnetif; /* network interface structure */
 static int Port = 0;
-static unsigned int MaxConns = 0;
-static volatile unsigned int conns = 0;
+unsigned int MaxConns = 0;
+volatile unsigned int conns = 0;
 static const size_t recvsize = 128;
 static unsigned short nextconn = 0;
 const char hostname[MAX_HOSTNAME_LEN] = "hostname";
