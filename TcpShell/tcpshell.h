@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __CPLUSPLUS
+extern "C" {
+#endif // __CPLUSPLUS
+
 // Just wrap around printf so we don't use semihosting in release builds.
 #ifdef DEBUG
 #include <stdio.h>
@@ -8,64 +12,40 @@
 #define dprintf(...)
 #endif
 
+#include <FreeRTOS.h>
+#include <list.h>
+#include <semphr.h>
+#include <assert.h>
 #include <queue.h>
 #include "lwipopts.h"
-#include "FreeRTOSConfig.h"
+#include "libtelnet.h"
+	
+// assert a value is true and branch if it is true
+#define assert_if(X) assert(X); if ((X))
+#define BREAK_ERROR_HANDLER() __BKPT(0)
+#define BREAK_ASSERT_FAILED() __BKPT(1)
+#define BREAK_STACK_OVERFLOW() __BKPT(2)
+#define BREAK_MALLOC_FAILED() __BKPT(3)
 
 #ifndef __IO
 #define __IO volatile
 #endif
-
-// For telnet
-#define SERVER_PORT 23
-#define MAX_CONNECTIONS (MEMP_NUM_TCP_PCB - 1)
-
-// Max username len
-#define USER_NAME_LEN 64
-
-// The param is the blink count, which is based on one of the error codes defined above.
-// The LED will keep blinking until the param is set to 0 or noerrro
-typedef enum ErrorCode_t
-{
-	ErrorCodeNone = 0,
-	ErrorCodeEthAndLwipInit = 1,
-	ErrorCodeDhcpTimeout = 2,
-	ErrorCodeBrokeOutOfOsKernelStart = 3,
-	ErrorCodeNetconnAcceptFailure = 4,
-	ErrorApplicationStackOverflow = 5,
-	ErrorApplicationAssertFailure = 6
-} ErrorCode;
-
-// These typedefs define the user and app context
-typedef struct UserContext_t UserContext, *PUserContext;
-
-typedef int(*PAppRun)(PUserContext);
-
-typedef struct UserApp_t
-{
-	const char* AppName;
-	PAppRun Run;
-} UserApp, *PUserApp;
-
-typedef struct UserContext_t
-{
-	struct netconn *conn;
-	unsigned int connid;
-	struct netbuf *buf;
-	char* ptr;
-	unsigned short remaining;
-	PUserApp NextApp;
-} UserContext, *PUserContext;
+	
+// RTOS entry
+#include "rtosmain.h"
+	
+// I2C functionality
+#include "i2c.h"
 
 // LED control to be used during command processing.
-void LedInit();
-void LedThinkingOn();
-void LedThinkingOff();
-void LedError(ErrorCode error);
+#include "led_display.h"
 
 // TCP/IP server control and I/O convenience functions
-void TcpInit(int port, int maxConns);
+#include "tcpserver.h"
 
-// These are only meant to be called from the thread of a running app...
-int TcpPutchar(char ch);
-int TcpGetchar();
+// Read and write a char of telnet input. Use this instead of telnet_recv as it properly reads data off the port and checks for errors.
+#include "console.h"
+	
+#ifdef __CPLUSPLUS
+}
+#endif // __CPLUSPLUS

@@ -54,8 +54,8 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <queue.h>
+#include <stdarg.h>
 #include "tcpshell.h"
-#include "User.h"
 #include "ethernetif.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,9 +95,22 @@ __IO uint8_t DHCP_state = DHCP_OFF;
 #endif
 struct netif gnetif; /* network interface structure */
 static int Port = 0;
-static unsigned int MaxConns = 0;
-static volatile unsigned int conns = 0;
 static const size_t recvsize = 128;
+static unsigned short nextconn = 0;
+volatile unsigned int conns = 0;
+unsigned int max_conns = 0;
+const char hostname[MAX_HOSTNAME_LEN] = "hostname";
+
+static const telnet_telopt_t my_telopts[] = {
+	{ TELNET_TELOPT_ECHO, TELNET_WILL, TELNET_DONT },
+	{ TELNET_TELOPT_TTYPE, TELNET_WILL, TELNET_DONT },
+	{ TELNET_TELOPT_COMPRESS2, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_ZMP, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_MSSP, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_BINARY, TELNET_WONT, TELNET_DONT },
+	{ TELNET_TELOPT_NAWS, TELNET_WONT, TELNET_DONT },
+	{ -1, 0, 0 }
+};
 
 /* Private function prototypes -----------------------------------------------*/
 static void TcpThread(void const * argument);
@@ -106,12 +119,13 @@ static void ConnectionThread(void const * argument);
 static void DHCP_thread(void const * argument);
 static void User_notification(struct netif *netif);
 static void Netif_Config(void);
+static void my_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data);
 
-void TcpInit(int port, int maxConns)
+void tcpserver_init(int port, int maxConns)
 {
 	assert(port > 0 && maxConns > 0);
 	Port = port;
-	MaxConns = maxConns;
+	max_conns = maxConns;
 	
 	/* Init thread */
 #if defined(__GNUC__)
@@ -123,75 +137,11 @@ void TcpInit(int port, int maxConns)
 	osThreadCreate(osThread(Tcp), NULL);
 }
 
-int TcpPutchar(char ch)
-{
-	PUserContext context = pvTaskGetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT);
-	assert(context);
-	if (context)
-	{
-		err_t err;
-		// Send the char
-		err = netconn_write(context->conn, &ch, sizeof(ch), NETCONN_NOCOPY);
-		if (ERR_IS_FATAL(err))
-		{
-			dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, err, lwip_strerr(err));
-		}
-	
-		return err;
-	}
-	
-	return -1;
-}
-
-int TcpGetchar()
-{
-	PUserContext context = pvTaskGetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT);
-	assert(context);
-	if (context)
-	{
-		if (context->buf && context->remaining > 0)
-		{
-			char ch;
-			--context->remaining;
-			ch = *context->ptr++;
-			return ch;
-		}
-		else
-		{
-			err_t err;
-	
-			if (context->buf)
-			{
-				netbuf_delete(context->buf);
-				context->buf = NULL;
-			}
-		
-			// Read more...
-			err = netconn_recv(context->conn, &context->buf);
-			if (err == ERR_OK) 
-			{
-				netbuf_data(context->buf, (void**)&context->ptr, &context->remaining);
-			}
-			else
-			{
-				if (ERR_IS_FATAL(err))
-				{
-					dprintf("%d: netconn_recv failed: %d (%s)\n", context->connid, err, lwip_strerr(err));	
-				}
-			
-				return err;
-			}
-		
-			return TcpGetchar(context);
-		}
-	}
-	
-	return -1;
-}
-
 /* Private functions ---------------------------------------------------------*/
 void TcpThread(void const* argument)
 {
+	dprintf("Hostname is '%s', MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", hostname, macaddress[0], macaddress[1], macaddress[2], macaddress[3], macaddress[4], macaddress[5]);
+	
 	/* Create tcp_ip stack thread */
 	tcpip_init(NULL, NULL);
   
@@ -199,7 +149,7 @@ void TcpThread(void const* argument)
 	Netif_Config();
   
 	/* Initialize server thread */
-	osThreadDef(TcpServer, ServerThread, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 2);
+	osThreadDef(TcpServer, ServerThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 4);
 	osThreadCreate(osThread(TcpServer), &gnetif);
   
 	/* Notify user about the network interface config */
@@ -244,8 +194,8 @@ void ServerThread(void const * argument)
 				accept_err = netconn_accept(conn, &newconn);
 				if (accept_err == ERR_OK)
 				{
-					assert(conns >= 0 && conns <= MaxConns);
-					if (conns == MaxConns)
+					assert(conns >= 0 && conns <= max_conns);
+					if (conns == max_conns)
 					{
 						/* delete connection... we're full */
 						netconn_close(newconn);
@@ -253,15 +203,12 @@ void ServerThread(void const * argument)
 					}
 					else
 					{
-						PUserContext newContext = pvPortMalloc(sizeof(UserContext));
+						pconsole newContext = console_init(newconn, (unsigned int)nextconn++);
 						if (newContext)
 						{
-							memset(newContext, 0, sizeof(UserContext));
-							newContext->conn = newconn;
-							newContext->connid = conns;
 							netconn_set_recvbufsize(newconn, recvsize);
 							++conns;
-							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 2);
+							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
 							osThreadCreate(osThread(Connection), newContext);
 						}
 					}
@@ -269,7 +216,7 @@ void ServerThread(void const * argument)
 				else if (accept_err != ERR_TIMEOUT)
 				{
 					dprintf("netconn_accept failed: %d", accept_err);
-					LedError(ErrorCodeNetconnAcceptFailure);
+					led_error(ErrorCodeNetconnAcceptFailure);
 				}
 			}
 		}
@@ -278,7 +225,7 @@ void ServerThread(void const * argument)
 
 void ConnectionThread(void const * argument)
 {
-	PUserContext context = (PUserContext)argument;
+	pconsole context = (pconsole)argument;
 	err_t err;
 		
 	u32_t remoteaddr = context->conn->pcb.ip->remote_ip.addr;
@@ -289,42 +236,37 @@ void ConnectionThread(void const * argument)
 		(remoteaddr >> 16) & 0xFF,
 		(remoteaddr >> 24) & 0xFF);
 	
-	// Pretty simple state machine that just keeps running apps until no more apps are selected
-	context->NextApp = &EchoApp;
-	vTaskSetThreadLocalStoragePointer(NULL, TLS_USER_CONTEXT, context);
-	
 	// Go through telnet negotiation
+	context->telnet = telnet_init(my_telopts, my_event_handler, 0, context);
+	context->next_app = (papp)&logon_app;
+	if(context->telnet)
+	{ 
+		while (!context->exiting)
+		{
+			papp nextApp = context->next_app;
+			if (nextApp == NULL)
+			{
+				nextApp = (papp)&shell_app;
+			}
+
+			context->next_app = NULL;
+			dprintf("%d: exec %s ('%s' with argc=%d)\n", context->connid, nextApp->name, context->command_line, context->argc);
+			int err = nextApp->run(context, context->argc, context->argv);
+			dprintf("%d: %s exit code %d\n", context->connid, nextApp->name, err);
+			char errstr[10] = { };
+			itoa(err, errstr, sizeof(errstr));
+			if ((err = console_setenv(context, ENV_ERROR, errstr)) < 0)
+			{
+				dprintf("%d: console_setenv(," ENV_ERROR ",) failed with rc=%d", context->connid , err);
+			}
+		}
+	}
 	
-	
-	do
-	{
-		PUserApp nextApp = context->NextApp;
-		context->NextApp = NULL;
-		int err = nextApp->Run(context);
-		dprintf("%d: %s exit code %d\n", context->connid, nextApp->AppName, err);
-	} while (context->NextApp);
+	console_free(&context);
 	
 	dprintf("%d: Closing connection. netconn err=%d (%s)\n", context->connid, netconn_err(context->conn), lwip_strerr(netconn_err(context->conn)));
 	--conns;
 	assert(conns >= 0);
-	
-	if (context->conn)
-	{
-		if (netconn_err(context->conn) == ERR_OK)
-		{
-			// Only close if the conn is still open
-			netconn_close(context->conn);	
-		}
-		
-		netconn_delete(context->conn);
-	}
-	
-	if (context->buf)
-	{
-		netbuf_delete(context->buf);
-	}
-	
-	vPortFree(context);
 	
 	for (;;)
 	{
@@ -359,6 +301,11 @@ static void Netif_Config(void)
   
 	/*  Registers the default network interface. */
 	netif_set_default(&gnetif);
+	
+#if LWIP_NETIF_HOSTNAME == 1
+	/* Sets the interface hostname */
+	netif_set_hostname(&gnetif, hostname);
+#endif // LWIP_NETIF_HOSTNAME
   
 	if (netif_is_link_up(&gnetif))
 	{
@@ -397,7 +344,7 @@ void User_notification(struct netif *netif)
 #endif  /* USE_DHCP */
 		/* Turn On LED 3 to indicate ETH and LwIP init error */
 		dprintf("ETH and LWIP init error\n");
-		LedError(ErrorCodeEthAndLwipInit);
+		led_error(ErrorCodeEthAndLwipInit);
 	} 
 }
 
@@ -435,7 +382,7 @@ void DHCP_thread(void const * argument)
 				{
 					DHCP_state = DHCP_ADDRESS_ASSIGNED;	
           
-					LedError(ErrorCodeNone);
+					led_error(ErrorCodeNone);
 					u32_t addr = netif->ip_addr.addr;
 					dprintf("DHCP address changed to %lu.%lu.%lu.%lu\n", 
 						addr & 0xFF,
@@ -461,12 +408,12 @@ void DHCP_thread(void const * argument)
 						IP_ADDR4(&gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
 						netif_set_addr(netif, ip_2_ip4(&ipaddr), ip_2_ip4(&netmask), ip_2_ip4(&gw));
 
-						LedError(ErrorCodeDhcpTimeout);
+						led_error(ErrorCodeDhcpTimeout);
 						dprintf("DHCP timeout. Defaulting to %d.%d.%d.%d instead.\n", IP_ADDR0, IP_ADDR1, IP_ADDR2, IP_ADDR3);
 					}
 					else
 					{
-						LedError(ErrorCodeNone);
+						led_error(ErrorCodeNone);
 					}
 				}
 			}
@@ -486,5 +433,41 @@ void DHCP_thread(void const * argument)
 	}
 }
 #endif  /* USE_DHCP */
+
+static void my_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data)
+{
+	pconsole context = (pconsole)user_data;
+	assert_if(context)
+	{
+		// Telnet event handler stuff	
+		switch(ev->type) 
+		{
+		case TELNET_EV_DATA:
+			if (ev->data.size > 0)
+			{
+				context->newch = true;
+			}
+			
+			break;
+		case TELNET_EV_SEND:
+			{
+				if (context->write_err >= 0)
+				{
+					context->write_err = netconn_write(context->conn, ev->data.buffer, ev->data.size, NETCONN_COPY);
+					if (ERR_IS_FATAL(context->write_err))
+					{
+						dprintf("%d: netconn_write failed: %d (%s)\n", context->connid, context->write_err, lwip_strerr(context->write_err));
+					}
+				}
+			}
+			break;
+		case TELNET_EV_ERROR:
+			dprintf("%d: TELNET error: %s", context->connid, ev->error.msg);
+			break;
+		default:
+			break;
+		}
+	}
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
