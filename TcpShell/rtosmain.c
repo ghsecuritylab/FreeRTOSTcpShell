@@ -25,34 +25,32 @@
   ******************************************************************************
   */
 
-// RTOS hooks
-
 /* Includes ------------------------------------------------------------------*/
 #include <stm32f7xx_hal.h>
 #include <stm32f7xx_hal_pwr.h>
 #include <stm32f7xx_hal_rtc.h>
-#include <stm32f7xx_hal_i2c.h>
 #include <../CMSIS_RTOS/cmsis_os.h>
 #include <stdbool.h>
-#include <ctype.h>
-#include <list.h>
 #include "tcpshell.h"
-#include "i2c.h"
 
-// Idle tick granularity (ms) assuming a 32Khz rtc clock source with a 16 clock divisor
-#define IDLE_TICKS_TO_COUNTS(X) (RTC_CLOCK_RATE * X / 1000 / 16)
+extern ETH_HandleTypeDef EthHandle;
+extern ETH_DMADescTypeDef* DMARxDscrTab;
+extern ETH_DMADescTypeDef* DMATxDscrTab;
+RTC_HandleTypeDef RtcHandle = { };
+SemaphoreHandle_t SystemSemaphore;
+extern volatile unsigned int conns;
+extern unsigned int MaxConns;
 
-extern RTC_HandleTypeDef hrtc;
-volatile int idle_granularity_ms = IDLE_TICK_GRANULARITY_MS;  // The idle clock granularity in MS
-
+static void MPU_Config(void);
+static void RTC_Config(void);
 static void CPU_CACHE_Enable(void);
 
 /**
-  * @brief  RTOS entry
+  * @brief  Main program
   * @param  None
   * @retval None
   */
-void rtos_entry(void)
+int main(void)
 {
 	/* STM32F4xx HAL library initialization:
 	     - Configure the Flash prefetch, instruction and Data caches
@@ -60,24 +58,107 @@ void rtos_entry(void)
 	     - Set NVIC Group Priority to 4
 	     - Global MSP (MCU Support Package) initialization
 	*/
-	dprintf("TcpShell: RTOS entry. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
+	dprintf("TcpShell: Init code. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
 	
-	// System initialization
+	/* Configure the MPU attributes as Device memory for ETH DMA descriptors */
+	MPU_Config();
+  
+	/* Enable the CPU Cache */
 	CPU_CACHE_Enable();
+	
+	/* HAL and function init code */
+	HAL_Init();
+	
+	/* Configure the power management and RTC functions */
 	HAL_PWR_DisableSleepOnExit();
 	
-	// User defined API initialziation
-	i2c_init();
-	led_init();
-	tcpserver_init(SERVER_PORT, MAX_CONNECTIONS);
+	RTC_Config();
+	
+	/* Configure the RNG */
+	
+	LedInit();
+	
+	SystemSemaphore = xSemaphoreCreateBinary();
+	xSemaphoreGive(SystemSemaphore);
+	TcpInit(SERVER_PORT, MAX_CONNECTIONS);
   
 	/* Start scheduler */
 	dprintf("TcpShell: about to call osKernelStart()\n");	
-	led_thinking_off();
+	LedThinkingOff();
 	osKernelStart();
 	
 	/* We should never get here as control is now taken by the scheduler */
 	dprintf("TcpShell: Broke out of osKernelStart()\n");
+	LedError(ErrorCodeBrokeOutOfOsKernelStart);
+}
+
+void SysTick_Handler(void)
+{
+	HAL_IncTick();
+	osSystickHandler();
+}
+
+void ETH_IRQHandler(void)
+{
+	HAL_ETH_IRQHandler(&EthHandle);
+}
+
+/**
+  * @brief  Configure the MPU attributes as Device for  Ethernet Descriptors in the SRAM1.
+  * @note   The Base Address is 0x20010000 since this memory interface is the AXI.
+  *         The Configured Region Size is 256B (size of Rx and Tx ETH descriptors) 
+  *       
+  * @param  None
+  * @retval None
+  */
+static void MPU_Config(void)
+{
+	MPU_Region_InitTypeDef MPU_InitStruct;
+  
+	/* Disable the MPU */
+	HAL_MPU_Disable();
+  
+	/* Configure the MPU attributes as Device for Ethernet Descriptors in the SRAM */
+	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+	MPU_InitStruct.BaseAddress = (uint32_t)&DMARxDscrTab[0];
+	MPU_InitStruct.Size = MPU_REGION_SIZE_128B;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
+  
+	/* Configure the MPU attributes as Device for Ethernet Descriptors in the SRAM */
+	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+	MPU_InitStruct.BaseAddress = (uint32_t)&DMATxDscrTab[0];
+	MPU_InitStruct.Size = MPU_REGION_SIZE_128B;
+	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
+	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
+	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+	MPU_InitStruct.Number = MPU_REGION_NUMBER0;
+	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+	MPU_InitStruct.SubRegionDisable = 0x00;
+	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+	HAL_MPU_ConfigRegion(&MPU_InitStruct);
+
+	/* Enable the MPU */
+	HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+}
+
+static void RTC_Config(void)
+{
+	RtcHandle.Instance = RTC;
+	RtcHandle.Init.AsynchPrediv = 0x7f;
+	RtcHandle.Init.SynchPrediv = 0x7fff;
+	RtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
+	RtcHandle.Init.OutPut = RTC_OUTPUT_WAKEUP;
+	RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	HAL_RTC_Init(&RtcHandle);
 }
 
 /**
@@ -94,36 +175,28 @@ static void CPU_CACHE_Enable(void)
 	SCB_EnableDCache();
 }
 
-/**
-  * @brief  SYSTICK callback.
-  * @retval None
-  */
-void HAL_SYSTICK_Callback(void)
-{
-	osSystickHandler();
-}
-
-/**
-  * @brief  idle task hook.
-  * @retval None
-  */
 void vApplicationIdleHook(void)
 {
 	// Configure the MCU into sleep mode with a wakeup alarm to check for more non-ISR work to do in 10ish ms.
-	if (idle_granularity_ms > 0)
+	if(HAL_OK == HAL_RTCEx_SetWakeUpTimer(&RtcHandle, 0xCC, RTC_WAKEUPCLOCK_RTCCLK_DIV16))
 	{
-		uint32_t counts = IDLE_TICKS_TO_COUNTS(idle_granularity_ms);
-		if (counts > 0)
+		if (conns > 0)
 		{
-			assert_if (HAL_OK == HAL_RTCEx_SetWakeUpTimer(&hrtc, counts, RTC_WAKEUPCLOCK_RTCCLK_DIV16))
+			HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+		}
+		else
+		{
+			// Put us into stop mode for the next connection request.
+			assert(conns == 0);
+			if (conns == 0)
 			{
-				HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-				HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
+				HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);	
 			}
 		}
+	
+		HAL_RTCEx_DeactivateWakeUpTimer(&RtcHandle);
 	}
 }
-
 
 #ifdef  USE_FULL_ASSERT
 /**
@@ -135,9 +208,8 @@ void vApplicationIdleHook(void)
   */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-	vTaskSuspendAll();
-	BREAK_ASSERT_FAILED();
-	xTaskResumeAll();
+	dprintf("Assert failed: file %s on line %lu\r\n", file, line);
+	asm("bkpt 255");
 }
 
 #endif
@@ -146,39 +218,18 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
-	vTaskSuspendAll();
-	BREAK_STACK_OVERFLOW();
-	led_error(ErrorApplicationStackOverflow);
-	xTaskResumeAll();
+	dprintf("Stack overflow in task %s\r\n", pcTaskName);
+	LedError(ErrorApplicationStackOverflow);
+	asm("bkpt 255");
 }
 
 #endif
 
 void vApplicationMallocFailedHook(void)
 {
-	vTaskSuspendAll();
-	size_t freeHeapSize = xPortGetFreeHeapSize();
-	size_t minimumEverFreeHeapSize = xPortGetMinimumEverFreeHeapSize();
-	BREAK_MALLOC_FAILED();
-	led_error(ErrorApplicationOutOfMemory);
-	xTaskResumeAll();
+	dprintf("malloc failed\r\n");
+	LedError(ErrorApplicationOutOfMemory);
+	asm("bkpt 255");
 }
 
-const char* rtos_hal_status(HAL_StatusTypeDef halTD)
-{
-	switch (halTD)
-	{
-	case HAL_OK:
-		return "HAL_OK";
-	case HAL_ERROR:
-		return "HAL_ERROR";
-	case HAL_BUSY:
-		return "HAL_BUSY";
-	case HAL_TIMEOUT:
-		return "HAL_TIMEOUT";
-	}
-	
-	return "";
-}
-	
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

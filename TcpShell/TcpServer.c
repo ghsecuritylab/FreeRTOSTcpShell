@@ -48,7 +48,6 @@
 #include <lwip/api.h>
 #include <lwip/opt.h>
 #include <lwip/dhcp.h>
-#include <lwip/tcp.h>
 #include <lwip/tcpip.h>
 #include <stdio.h>
 #include <string.h>
@@ -57,6 +56,7 @@
 #include <queue.h>
 #include <stdarg.h>
 #include "tcpshell.h"
+#include "User.h"
 #include "ethernetif.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -96,10 +96,10 @@ __IO uint8_t DHCP_state = DHCP_OFF;
 #endif
 struct netif gnetif; /* network interface structure */
 static int Port = 0;
+unsigned int MaxConns = 0;
+volatile unsigned int conns = 0;
 static const size_t recvsize = 128;
 static unsigned short nextconn = 0;
-static volatile unsigned int conns = 0;
-static unsigned int max_conns = 0;
 const char hostname[MAX_HOSTNAME_LEN] = "hostname";
 
 static const telnet_telopt_t my_telopts[] = {
@@ -122,11 +122,11 @@ static void User_notification(struct netif *netif);
 static void Netif_Config(void);
 static void my_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data);
 
-void tcpserver_init(int port, int maxConns)
+void TcpInit(int port, int maxConns)
 {
 	assert(port > 0 && maxConns > 0);
 	Port = port;
-	max_conns = maxConns;
+	MaxConns = maxConns;
 	
 	/* Init thread */
 #if defined(__GNUC__)
@@ -138,11 +138,404 @@ void tcpserver_init(int port, int maxConns)
 	osThreadCreate(osThread(Tcp), NULL);
 }
 
+int console_getchar(PUserContext context)
+{
+	assert(context);
+	if (context)
+	{
+		for (;;)
+		{
+			// Purge the current buf until we get a new non-control char
+			context->newch = false;
+			while (context->buf && context->remaining > 0)
+			{
+				char ch = *context->ptr++;
+				--context->remaining;
+				telnet_recv(context->telnet, &ch, 1);
+				if (context->newch)
+				{
+					return ch;	
+				}
+			}
+			
+			// Uh oh. We purged our buf but didn't get a non-control char yet.
+			err_t err;
+			if (context->buf)
+			{
+				netbuf_delete(context->buf);
+				context->buf = NULL;
+			}
+		
+			// Read more...
+			err = netconn_recv(context->conn, &context->buf);
+			if (err == ERR_OK) 
+			{
+				netbuf_data(context->buf, (void**)&context->ptr, &context->remaining);
+			}
+			else
+			{
+				if (ERR_IS_FATAL(err))
+				{
+					dprintf("%d: netconn_recv failed: %d (%s)\n", context->connid, err, lwip_strerr(err));	
+				}
+			
+				return err;
+			}
+		}
+		
+		assert(false);
+	}
+	
+	return 0;
+}
+
+int console_putchar(PUserContext context, char ch)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		telnet_send(context->telnet, (const char*)&ch, 1);
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_puts(PUserContext context, const char* str)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		telnet_send(context->telnet, str, strlen(str));
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_printf(PUserContext context, const char* fmt, ...)
+{
+	assert(context);
+	if (context)
+	{
+		va_list args;
+		va_start(args, fmt);
+		int rc = console_vprintf(context, fmt, args);
+		va_end(args);
+		return rc;
+	}
+	
+	return 0;
+}
+
+int console_vprintf(PUserContext context, const char* fmt, va_list args)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		int written = telnet_vprintf(context->telnet, fmt, args);
+		if (context->write_err == 0)
+		{
+			return written;
+		}
+		
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_setflags(PUserContext context, ConsoleFlags flags)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		if (flags & ConsoleFlagsEchoOff)
+		{
+			telnet_negotiate(context->telnet, TELNET_WILL, TELNET_TELOPT_ECHO);
+			telnet_negotiate(context->telnet, TELNET_WILL, TELNET_TELOPT_SGA);
+		}
+		
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_unsetflags(PUserContext context, ConsoleFlags flags)
+{
+	assert(context);
+	if (context)
+	{
+		context->write_err = 0;
+		if (flags & ConsoleFlagsEchoOff)
+		{
+			telnet_negotiate(context->telnet, TELNET_WONT, TELNET_TELOPT_ECHO);
+			telnet_negotiate(context->telnet, TELNET_WONT, TELNET_TELOPT_SGA);
+		}
+		
+		return context->write_err;
+	}
+	
+	return 0;
+}
+
+int console_tokenize(PUserContext context, const char* arguments)
+{
+	// Very rudimentary console argument parser...
+	int rc = 0;
+	int argv_i;
+	int start;
+	int ch_i;
+	size_t sizeArguments;
+	bool escapeNext = false;
+	assert(context && arguments);
+	if (context && arguments)
+	{
+		if (!strncpy(context->arguments, arguments, sizeof(context->arguments)))
+		{
+			rc = -1;
+			goto done;
+		}
+		
+		sizeArguments = strlen(arguments);
+		start = argv_i = ch_i = 0;
+		for (; argv_i < MAX_ARGUMENTS_LEN && ch_i < sizeArguments; ++ch_i)
+		{
+			if (context->arguments[ch_i] == '^')
+			{
+				escapeNext = true;
+			}
+			else
+			{
+				if (escapeNext)
+				{
+					escapeNext = false;
+				}
+				else if (context->arguments[ch_i] == ' ')
+				{
+					while (ch_i < sizeArguments && context->arguments[ch_i] == ' ')
+					{
+						context->arguments[ch_i++] = 0;
+					}
+				
+					if (argv_i < MAX_ARGUMENTS_LEN)
+					{
+						context->argv[argv_i++] = &context->arguments[start];
+					}
+				
+					if (ch_i < sizeArguments)
+					{
+						start = ch_i;
+					}
+				}
+			}
+		}
+		
+		if (argv_i >= MAX_ARGUMENTS_LEN)
+		{
+			rc = -1;
+			goto done;
+		}
+		
+		if (argv_i < MAX_ARGUMENTS_LEN)
+		{
+			// Any remaining goes to argv_i
+			context->argv[argv_i++] = &context->arguments[start];
+		}
+		
+		context->argc = argv_i;
+	}
+	
+done:
+	if (rc != 0)
+	{
+		memset(context->arguments, 0, sizeof(context->arguments));
+		memset(context->argv, 0, sizeof(context->argv));
+		context->argc = 0;
+		return rc;
+	}
+	
+	return ch_i;
+}
+
+int console_exec(PUserContext context, const PUserApp app)
+{
+	assert(context && app);
+	if (context && app)
+	{
+		assert(!context->NextApp);
+		context->NextApp = app;
+	}
+	
+	return 0;
+}
+
+int console_getenv(PUserContext context, const char* name, const char** value)
+{
+	PUserEnvironment cur = context->env;
+	assert(context && name && value);
+	if (context && name && value)
+	{
+		while (cur)
+		{
+			if (strcmp(cur->Name, name) == 0)
+			{
+				*value = cur->Value;
+				return 0;
+			}
+			
+			cur = cur->Next;
+		}
+		
+		return -1;
+	}
+	
+	return 0;
+}
+
+int console_setenv(PUserContext context, const char* name, char* value)
+{
+	PUserEnvironment cur = context->env;
+	assert(context && name);
+	if (context && name)
+	{
+		if (!value)
+		{
+			return console_unsetenv(context, name);
+		}
+		
+		while (cur)
+		{
+			if (strcmp(cur->Name, name) == 0)
+			{
+				strncpy(cur->Value, value, sizeof(cur->Value));
+				return 0;
+			}
+			
+			cur = cur->Next;
+		}
+		
+		PUserEnvironment first = pvPortMalloc(sizeof(UserEnvironment));
+		if (first)
+		{
+			// Prepend it to the environment block
+			memset(first, 0, sizeof(UserEnvironment));	
+			strncpy(first->Name, name, sizeof(first->Name));
+			strncpy(first->Value, value, sizeof(first->Value));
+			first->Next = context->env;
+			context->env = first;
+		}
+		else
+		{
+			// Uh oh. Out of memory.
+			return - 1;
+		}
+	}
+	
+	return 0;
+}
+
+int console_unsetenv(PUserContext context, const char* name)
+{
+	PUserEnvironment prev = NULL;
+	PUserEnvironment cur = context->env;
+	assert(context && name);
+	if (context && name)
+	{
+		while (cur)
+		{
+			if (strcmp(cur->Name, name) == 0)
+			{
+				goto delete;
+			}
+			
+			prev = cur;
+			cur = cur->Next;
+		}
+		
+		return -1;
+	}
+	
+delete:
+	if (prev)
+	{
+		prev->Next = cur->Next;
+		vPortFree(cur);
+	}
+	else
+	{
+		vPortFree(context->env);
+		context->env = cur;
+	}
+	
+	return 0;
+}
+
+int console_getline(PUserContext context, ConsoleFlags flags, char* line, size_t len)
+{
+	int rc = 0;
+	int off = 0;
+	assert(context);
+	if (context)
+	{
+		memset(line, 0, len);
+		while (off < len && (rc = console_getchar(context)) >= 0)
+		{
+			if (rc == '\b')
+			{
+				if (off > 0)
+				{
+					--off;	
+				}
+				else
+				{
+					continue;
+				}
+			}
+		
+			if (off < len)
+			{
+				char ch = rc;
+				if (flags && ConsoleFlagsEchoOff)
+				{
+					if ((rc = console_putchar(context, ch)) < 0)
+					{
+						goto done;
+					}	
+				}
+				
+				if (ch == '\n')
+				{
+					line[off++] = 0;
+					break;
+				}
+				else if (ch != '\b' && ch != '\r')
+				{
+					line[off++] = ch;	
+				}
+			}
+		}
+	}
+	
+done:
+	if (rc < 0)
+	{
+		return rc;
+	}
+	
+	return off;
+}
+
 /* Private functions ---------------------------------------------------------*/
 void TcpThread(void const* argument)
 {
 	dprintf("Hostname is '%s', MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", hostname, macaddress[0], macaddress[1], macaddress[2], macaddress[3], macaddress[4], macaddress[5]);
-	
+
 	/* Create tcp_ip stack thread */
 	tcpip_init(NULL, NULL);
   
@@ -195,8 +588,8 @@ void ServerThread(void const * argument)
 				accept_err = netconn_accept(conn, &newconn);
 				if (accept_err == ERR_OK)
 				{
-					assert(conns >= 0 && conns <= max_conns);
-					if (conns == max_conns)
+					assert(conns >= 0 && conns <= MaxConns);
+					if (conns == MaxConns)
 					{
 						/* delete connection... we're full */
 						netconn_close(newconn);
@@ -204,12 +597,15 @@ void ServerThread(void const * argument)
 					}
 					else
 					{
-						pconsole newContext = console_init(newconn, (unsigned int)nextconn++);
+						PUserContext newContext = pvPortMalloc(sizeof(UserContext));
 						if (newContext)
 						{
+							memset(newContext, 0, sizeof(UserContext));
+							newContext->conn = newconn;
+							newContext->connid = (unsigned int)nextconn++;
 							netconn_set_recvbufsize(newconn, recvsize);
 							++conns;
-							osThreadDef(Connection, ConnectionThread, osPriorityHigh, 0, configMINIMAL_STACK_SIZE * 8);
+							osThreadDef(Connection, ConnectionThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 8);
 							osThreadCreate(osThread(Connection), newContext);
 						}
 					}
@@ -217,7 +613,7 @@ void ServerThread(void const * argument)
 				else if (accept_err != ERR_TIMEOUT)
 				{
 					dprintf("netconn_accept failed: %d", accept_err);
-					led_error(ErrorCodeNetconnAcceptFailure);
+					LedError(ErrorCodeNetconnAcceptFailure);
 				}
 			}
 		}
@@ -226,7 +622,7 @@ void ServerThread(void const * argument)
 
 void ConnectionThread(void const * argument)
 {
-	pconsole context = (pconsole)argument;
+	PUserContext context = (PUserContext)argument;
 	err_t err;
 		
 	u32_t remoteaddr = context->conn->pcb.ip->remote_ip.addr;
@@ -238,23 +634,22 @@ void ConnectionThread(void const * argument)
 		(remoteaddr >> 24) & 0xFF);
 	
 	// Go through telnet negotiation
-	tcp_nagle_disable(context->conn->pcb.tcp);
 	context->telnet = telnet_init(my_telopts, my_event_handler, 0, context);
-	context->next_app = (papp)&logon_app;
+	context->NextApp = (PUserApp)&LogonApp;
 	if(context->telnet)
 	{ 
-		while (!context->exiting && !ERR_IS_FATAL(netconn_err(context->conn)))
+		while (!context->exiting)
 		{
-			papp nextApp = context->next_app;
+			PUserApp nextApp = context->NextApp;
 			if (nextApp == NULL)
 			{
-				nextApp = (papp)&shell_app;
+				nextApp = (PUserApp)&ShellApp;
 			}
 
-			context->next_app = NULL;
-			dprintf("%d: exec %s ('%s' with argc=%d)\n", context->connid, nextApp->name, context->command_line, context->argc);
-			int err = nextApp->run(context, context->argc, context->argv);
-			dprintf("%d: %s exit code %d\n", context->connid, nextApp->name, err);
+			context->NextApp = NULL;
+			dprintf("%d: exec %s ('%s' with argc=%d)\n", context->connid, nextApp->AppName, context->arguments, context->argc);
+			int err = nextApp->Run(context, context->argc, context->argv);
+			dprintf("%d: %s exit code %d\n", context->connid, nextApp->AppName, err);
 			char errstr[10] = { };
 			itoa(err, errstr, sizeof(errstr));
 			if ((err = console_setenv(context, ENV_ERROR, errstr)) < 0)
@@ -262,10 +657,40 @@ void ConnectionThread(void const * argument)
 				dprintf("%d: console_setenv(," ENV_ERROR ",) failed with rc=%d", context->connid , err);
 			}
 		}
+		
+		telnet_free(context->telnet);
 	}
 	
+	if (context->conn)
+	{
+		if (netconn_err(context->conn) == ERR_OK)
+		{
+			// Only close if the conn is still open
+			netconn_close(context->conn);	
+		}
+		
+		netconn_delete(context->conn);
+	}
+	
+	if (context->buf)
+	{
+		netbuf_free(context->buf);
+	}
+	
+	if (context->env)
+	{
+		PUserEnvironment cur = context->env;
+		while (cur)
+		{
+			PUserEnvironment next = cur->Next;
+			vPortFree(cur);
+			cur = next;
+		}
+	}
+	
+	vPortFree(context);
+	
 	dprintf("%d: Closing connection. netconn err=%d (%s)\n", context->connid, netconn_err(context->conn), lwip_strerr(netconn_err(context->conn)));
-	console_free(&context);
 	--conns;
 	assert(conns >= 0);
 	
@@ -345,7 +770,7 @@ void User_notification(struct netif *netif)
 #endif  /* USE_DHCP */
 		/* Turn On LED 3 to indicate ETH and LwIP init error */
 		dprintf("ETH and LWIP init error\n");
-		led_error(ErrorCodeEthAndLwipInit);
+		LedError(ErrorCodeEthAndLwipInit);
 	} 
 }
 
@@ -383,7 +808,7 @@ void DHCP_thread(void const * argument)
 				{
 					DHCP_state = DHCP_ADDRESS_ASSIGNED;	
           
-					led_error(ErrorCodeNone);
+					LedError(ErrorCodeNone);
 					u32_t addr = netif->ip_addr.addr;
 					dprintf("DHCP address changed to %lu.%lu.%lu.%lu\n", 
 						addr & 0xFF,
@@ -409,12 +834,12 @@ void DHCP_thread(void const * argument)
 						IP_ADDR4(&gw, GW_ADDR0, GW_ADDR1, GW_ADDR2, GW_ADDR3);
 						netif_set_addr(netif, ip_2_ip4(&ipaddr), ip_2_ip4(&netmask), ip_2_ip4(&gw));
 
-						led_error(ErrorCodeDhcpTimeout);
+						LedError(ErrorCodeDhcpTimeout);
 						dprintf("DHCP timeout. Defaulting to %d.%d.%d.%d instead.\n", IP_ADDR0, IP_ADDR1, IP_ADDR2, IP_ADDR3);
 					}
 					else
 					{
-						led_error(ErrorCodeNone);
+						LedError(ErrorCodeNone);
 					}
 				}
 			}
@@ -437,8 +862,9 @@ void DHCP_thread(void const * argument)
 
 static void my_event_handler(telnet_t *telnet, telnet_event_t *ev, void *user_data)
 {
-	pconsole context = (pconsole)user_data;
-	assert_if(context)
+	PUserContext context = (PUserContext)user_data;
+	assert(context);
+	if (context)
 	{
 		// Telnet event handler stuff	
 		switch(ev->type) 
