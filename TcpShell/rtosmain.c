@@ -25,20 +25,34 @@
   ******************************************************************************
   */
 
+// RTOS hooks
+
 /* Includes ------------------------------------------------------------------*/
 #include <stm32f7xx_hal.h>
+#include <stm32f7xx_hal_pwr.h>
+#include <stm32f7xx_hal_rtc.h>
+#include <stm32f7xx_hal_i2c.h>
 #include <../CMSIS_RTOS/cmsis_os.h>
 #include <stdbool.h>
+#include <ctype.h>
+#include <list.h>
 #include "tcpshell.h"
+#include "i2c.h"
 
-extern ETH_HandleTypeDef EthHandle;
+// Idle tick granularity (ms) assuming a 32Khz rtc clock source with a 16 clock divisor
+#define IDLE_TICKS_TO_COUNTS(X) (RTC_CLOCK_RATE * X / 1000 / 16)
+
+extern RTC_HandleTypeDef hrtc;
+volatile int idle_granularity_ms = IDLE_TICK_GRANULARITY_MS;  // The idle clock granularity in MS
+
+static void CPU_CACHE_Enable(void);
 
 /**
-  * @brief  Main program
+  * @brief  RTOS entry
   * @param  None
   * @retval None
   */
-int main(void)
+void rtos_entry(void)
 {
 	/* STM32F4xx HAL library initialization:
 	     - Configure the Flash prefetch, instruction and Data caches
@@ -46,32 +60,70 @@ int main(void)
 	     - Set NVIC Group Priority to 4
 	     - Global MSP (MCU Support Package) initialization
 	*/
-	dprintf("TcpShell: Init code. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
-	HAL_Init();  
-	LedInit();
-	TcpInit(SERVER_PORT, MAX_CONNECTIONS);
+	dprintf("TcpShell: RTOS entry. Port=%u, maxConns=%u\n", SERVER_PORT, MAX_CONNECTIONS);
+	
+	// System initialization
+	CPU_CACHE_Enable();
+	HAL_PWR_DisableSleepOnExit();
+	
+	// User defined API initialziation
+	i2c_init();
+	led_init();
+	tcpserver_init(SERVER_PORT, MAX_CONNECTIONS);
   
 	/* Start scheduler */
 	dprintf("TcpShell: about to call osKernelStart()\n");	
-	LedThinkingOff();
+	led_thinking_off();
 	osKernelStart();
 	
 	/* We should never get here as control is now taken by the scheduler */
 	dprintf("TcpShell: Broke out of osKernelStart()\n");
-	LedError(ErrorCodeBrokeOutOfOsKernelStart);
-	for (;;) ;
 }
 
-void SysTick_Handler(void)
+/**
+  * @brief  CPU L1-Cache enable.
+  * @param  None
+  * @retval None
+  */
+static void CPU_CACHE_Enable(void)
 {
-	HAL_IncTick();
+	/* Enable I-Cache */
+	SCB_EnableICache();
+
+	/* Enable D-Cache */
+	SCB_EnableDCache();
+}
+
+/**
+  * @brief  SYSTICK callback.
+  * @retval None
+  */
+void HAL_SYSTICK_Callback(void)
+{
 	osSystickHandler();
 }
 
-void ETH_IRQHandler(void)
+/**
+  * @brief  idle task hook.
+  * @retval None
+  */
+void vApplicationIdleHook(void)
 {
-	HAL_ETH_IRQHandler(&EthHandle);
+	// Configure the MCU into sleep mode with a wakeup alarm to check for more non-ISR work to do in 10ish ms.
+	if (idle_granularity_ms > 0)
+	{
+		uint32_t counts = IDLE_TICKS_TO_COUNTS(idle_granularity_ms);
+		if (counts > 0)
+		{
+			assert_if (HAL_OK == HAL_RTCEx_SetWakeUpTimer(&hrtc, counts, RTC_WAKEUPCLOCK_RTCCLK_DIV16))
+			{
+				HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+				HAL_RTCEx_DeactivateWakeUpTimer(&hrtc);
+			}
+		}
+	}
 }
+
 
 #ifdef  USE_FULL_ASSERT
 /**
@@ -83,10 +135,9 @@ void ETH_IRQHandler(void)
   */
 void assert_failed(uint8_t* file, uint32_t line)
 {
-	dprintf("Assert failed: file %s on line %lu\r\n", file, line);
-	LedError(ErrorApplicationAssertFailure);
-	asm("bkpt 255");
-	for (;;) ;
+	vTaskSuspendAll();
+	BREAK_ASSERT_FAILED();
+	xTaskResumeAll();
 }
 
 #endif
@@ -95,12 +146,39 @@ void assert_failed(uint8_t* file, uint32_t line)
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
-	dprintf("Stack overflow in task %s\r\n", pcTaskName);
-	LedError(ErrorApplicationStackOverflow);
-	asm("bkpt 255");
-	for (;;) ;
+	vTaskSuspendAll();
+	BREAK_STACK_OVERFLOW();
+	led_error(ErrorApplicationStackOverflow);
+	xTaskResumeAll();
 }
 
 #endif
 
+void vApplicationMallocFailedHook(void)
+{
+	vTaskSuspendAll();
+	size_t freeHeapSize = xPortGetFreeHeapSize();
+	size_t minimumEverFreeHeapSize = xPortGetMinimumEverFreeHeapSize();
+	BREAK_MALLOC_FAILED();
+	led_error(ErrorApplicationOutOfMemory);
+	xTaskResumeAll();
+}
+
+const char* rtos_hal_status(HAL_StatusTypeDef halTD)
+{
+	switch (halTD)
+	{
+	case HAL_OK:
+		return "HAL_OK";
+	case HAL_ERROR:
+		return "HAL_ERROR";
+	case HAL_BUSY:
+		return "HAL_BUSY";
+	case HAL_TIMEOUT:
+		return "HAL_TIMEOUT";
+	}
+	
+	return "";
+}
+	
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

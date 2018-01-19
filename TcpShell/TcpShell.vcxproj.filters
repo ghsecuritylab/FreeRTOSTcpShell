@@ -139,11 +139,17 @@
     <Filter Include="Header files\Device-specific files\lwIP\netif\ppp\polarssl">
       <UniqueIdentifier>{e5337be1-28e0-4698-be95-c74c40fcc9b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header files\SD1306">
+      <UniqueIdentifier>{e9e354c1-28c7-458c-b2cc-d14e43d88a29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\SD1306">
+      <UniqueIdentifier>{78ab0b28-b1d3-494d-a3e6-35c11e1e08ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\Apps">
+      <UniqueIdentifier>{134ebdfc-0ed6-4cc2-8827-185842944af4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TcpShell.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="system_stm32f7xx.c">
       <Filter>Source files</Filter>
     </ClCompile>
@@ -846,9 +852,6 @@
     <None Include="stm32.xml">
       <Filter>VisualGDB settings</Filter>
     </None>
-    <ClCompile Include="Led.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="..\LwIP\src\core\def.c">
       <Filter>Source files\Device-specific files\lwIP\core</Filter>
     </ClCompile>
@@ -1377,9 +1380,6 @@
     <ClCompile Include="ethernetif.c">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="TcpServer.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="..\LwIP\src\netif\ethernet.c">
       <Filter>Source files\Device-specific files\lwIP\netif</Filter>
     </ClCompile>
@@ -1482,8 +1482,68 @@
     <ClCompile Include="..\LwIP\src\netif\ppp\polarssl\sha1.c">
       <Filter>Source files\Device-specific files\lwIP\netif\ppp\polarssl</Filter>
     </ClCompile>
-    <ClCompile Include="EchoApp.c">
+    <ClCompile Include="libtelnet.c">
       <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="Adafruit_GFX.cpp">
+      <Filter>Source files\SD1306</Filter>
+    </ClCompile>
+    <ClCompile Include="Adafruit_SSD1306.cpp">
+      <Filter>Source files\SD1306</Filter>
+    </ClCompile>
+    <ClCompile Include="i2c.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="stm32f7xx_hal_msp.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="stm32f7xx_it.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="console.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="tcpserver.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="echo_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="exit_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="help_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="hostname_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="logon_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="mac_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="reset_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="set_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="shell_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
+    <ClCompile Include="led_display.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="rtosmain.c">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="glcdfont.c">
+      <Filter>Source files\SD1306</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1499,8 +1559,40 @@
     <ClInclude Include="ethernetif.h">
       <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="User.h">
+    <ClInclude Include="libtelnet.h">
       <Filter>Header files</Filter>
     </ClInclude>
+    <ClInclude Include="Adafruit_GFX.h">
+      <Filter>Header files\SD1306</Filter>
+    </ClInclude>
+    <ClInclude Include="Adafruit_SSD1306.h">
+      <Filter>Header files\SD1306</Filter>
+    </ClInclude>
+    <ClInclude Include="i2c.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="stm32f7xx_it.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="console.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="tcpserver.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="led_display.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="rtosmain.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <LinkerScript Include="STM32F746ZG_flash.lds">
+      <Filter>Source files</Filter>
+    </LinkerScript>
   </ItemGroup>
 </Project>

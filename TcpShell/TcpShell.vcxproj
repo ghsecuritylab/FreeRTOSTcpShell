@@ -41,33 +41,72 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|VisualGDB'">
     <ClCompile>
-      <PreprocessorDefinitions>%(ClCompile.PreprocessorDefinitions);DEBUG=1;USE_FULL_ASSERT;USE_DHCP;DEBUG_DEFAULT_INTERRUPT_HANDLERS;LWIP_DEBUG</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\LwIP\src\include;$(SolutionDir)\LwIP\src\system;$(SolutionDir)\LwIP\system;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG=1;USE_FULL_ASSERT;USE_DHCP;DEBUG_DEFAULT_INTERRUPT_HANDLERS;LWIP_DEBUG=1;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\LwIP\src\include;$(SolutionDir)\LwIP\src\system;$(SolutionDir)\LwIP\system;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLinkerInputs>;%(Link.AdditionalLinkerInputs)</AdditionalLinkerInputs>
+      <LibrarySearchDirectories>;%(Link.LibrarySearchDirectories)</LibrarySearchDirectories>
+      <AdditionalLibraryNames>;%(Link.AdditionalLibraryNames)</AdditionalLibraryNames>
+      <LinkerScript>STM32F746ZG_flash.lds</LinkerScript>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|VisualGDB'">
     <ClCompile>
-      <PreprocessorDefinitions>%(ClCompile.PreprocessorDefinitions);NDEBUG=1;RELEASE=1;USE_DHCP;</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)\LwIP\src\include;$(SolutionDir)\LwIP\src\system;$(SolutionDir)\LwIP\system;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG=1;RELEASE=1;USE_DHCP;%(ClCompile.PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)\LwIP\src\include;$(SolutionDir)\LwIP\src\system;$(SolutionDir)\LwIP\system;%(ClCompile.AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLinkerInputs>;%(Link.AdditionalLinkerInputs)</AdditionalLinkerInputs>
+      <LibrarySearchDirectories>;%(Link.LibrarySearchDirectories)</LibrarySearchDirectories>
+      <AdditionalLibraryNames>;%(Link.AdditionalLibraryNames)</AdditionalLibraryNames>
+      <LinkerScript>STM32F746ZG_flash.lds</LinkerScript>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <LinkerScript Include="STM32F746ZG_flash.lds" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <ClCompile Include="EchoApp.c" />
+    <ClCompile Include="Adafruit_GFX.cpp" />
+    <ClCompile Include="Adafruit_SSD1306.cpp" />
+    <ClCompile Include="echo_app.c" />
     <ClCompile Include="ethernetif.c" />
-    <ClCompile Include="Led.c" />
-    <ClCompile Include="TcpServer.c" />
-    <ClCompile Include="TcpShell.c" />
+    <ClCompile Include="exit_app.c" />
+    <ClCompile Include="glcdfont.c" />
+    <ClCompile Include="help_app.c" />
+    <ClCompile Include="hostname_app.c" />
+    <ClCompile Include="i2c.c" />
+    <ClCompile Include="led_display.c" />
+    <ClCompile Include="libtelnet.c" />
+    <ClCompile Include="logon_app.c" />
+    <ClCompile Include="mac_app.c" />
+    <ClCompile Include="main.c" />
+    <ClCompile Include="reset_app.c" />
+    <ClInclude Include="rtosmain.h" />
+    <ClCompile Include="set_app.c" />
+    <ClCompile Include="shell_app.c" />
+    <ClCompile Include="stm32f7xx_hal_msp.c" />
+    <ClCompile Include="stm32f7xx_it.c" />
+    <ClCompile Include="tcpserver.c" />
+    <ClCompile Include="rtosmain.c" />
     <ClCompile Include="system_stm32f7xx.c" />
+    <ClCompile Include="console.c" />
+    <ClInclude Include="Adafruit_GFX.h" />
+    <ClInclude Include="Adafruit_SSD1306.h" />
+    <ClInclude Include="console.h" />
     <ClInclude Include="ethernetif.h" />
+    <ClInclude Include="i2c.h" />
+    <ClInclude Include="led_display.h" />
+    <ClInclude Include="libtelnet.h" />
     <ClInclude Include="lwipopts.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="stm32f7xx_it.h" />
     <ClInclude Include="stm32_assert.h" />
+    <ClInclude Include="tcpserver.h" />
     <ClInclude Include="tcpshell.h" />
-    <ClInclude Include="User.h" />
     <None Include="stm32.props" />
     <ClCompile Include="$(BSP_ROOT)\STM32F7xxxx\StartupFiles\startup_stm32f746xx.c" />
     <None Include="$(BSP_ROOT)\FreeRTOS\License\license.txt" />
