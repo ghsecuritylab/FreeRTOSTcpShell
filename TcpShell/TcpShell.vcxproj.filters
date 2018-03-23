@@ -1530,6 +1530,9 @@
     <ClCompile Include="message_app.c">
       <Filter>Source files\Apps</Filter>
     </ClCompile>
+    <ClCompile Include="beep_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tcpshell.h">

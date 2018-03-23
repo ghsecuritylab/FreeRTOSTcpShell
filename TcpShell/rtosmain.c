@@ -42,6 +42,7 @@
 #define IDLE_TICKS_TO_COUNTS(X) (RTC_CLOCK_RATE * X / 1000 / 16)
 
 extern RTC_HandleTypeDef hrtc;
+extern DAC_HandleTypeDef hdac;
 volatile int idle_granularity_ms = IDLE_TICK_GRANULARITY_MS;  // The idle clock granularity in MS
 
 static void CPU_CACHE_Enable(void);
@@ -76,6 +77,23 @@ void rtos_entry(void)
 	
 	/* We should never get here as control is now taken by the scheduler */
 	dprintf("TcpShell: Broke out of osKernelStart()\n");
+}
+
+void beep(uint16_t millis)
+{
+	if (HAL_OK == HAL_DAC_Start(&hdac, DAC_CHANNEL_1))
+	{
+		TickType_t end = HAL_GetTick() + millis / portTICK_PERIOD_MS;
+		while (HAL_GetTick() < end)
+		{
+			HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_8B_R, UINT8_MAX);
+			vTaskDelay(1);
+			HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_8B_R, 0);
+			vTaskDelay(1);
+		}
+		
+		HAL_DAC_Stop(&hdac, DAC_CHANNEL_1);
+	}
 }
 
 /**

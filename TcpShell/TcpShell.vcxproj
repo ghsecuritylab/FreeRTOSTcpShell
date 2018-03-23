@@ -70,6 +70,7 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
+    <ClCompile Include="beep_app.c" />
     <ClCompile Include="echo_app.c" />
     <ClCompile Include="ethernetif.c" />
     <ClCompile Include="exit_app.c" />

@@ -25,6 +25,7 @@ const papp app_list[MAX_USERAPP] =
 	(const papp)&reset_app,
 	(const papp)&exit_app,
 	(const papp)&help_app,
+	(const papp)&beep_app,
 	(const papp)&message_app
 };
 

@@ -50,6 +50,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+DAC_HandleTypeDef hdac;
+
 ETH_HandleTypeDef heth;
 
 I2C_HandleTypeDef hi2c1;
@@ -74,6 +76,7 @@ extern uint8_t Tx_Buff[ETH_TXBUFNB][ETH_TX_BUF_SIZE];
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_DAC_Init(void);
 static void MX_ETH_Init(void);
 static void MX_RTC_Init(void);
 static void MX_RNG_Init(void);
@@ -116,6 +119,7 @@ int main(void)
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_I2C1_Init();
+	MX_DAC_Init();
 	MX_ETH_Init();
 	MX_RTC_Init();
 	MX_RNG_Init();
@@ -189,6 +193,29 @@ void SystemClock_Config(void)
 
 	/* SysTick_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+}
+
+/* DAC init function */
+static void MX_DAC_Init(void)
+{
+	DAC_ChannelConfTypeDef sConfig;
+
+	/**DAC Initialization 
+	*/
+	hdac.Instance = DAC;
+	if (HAL_DAC_Init(&hdac) != HAL_OK)
+	{
+		_Error_Handler(__FILE__, __LINE__);
+	}
+
+	/**DAC channel OUT1 config 
+	*/
+	sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+	sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
+	if (HAL_DAC_ConfigChannel(&hdac, &sConfig, DAC_CHANNEL_1) != HAL_OK)
+	{
+		_Error_Handler(__FILE__, __LINE__);
+	}
 }
 
 /* ETH init function */
