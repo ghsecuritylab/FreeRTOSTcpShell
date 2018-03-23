@@ -37,7 +37,6 @@
 #include <ctype.h>
 #include <list.h>
 #include "tcpshell.h"
-#include "i2c.h"
 
 // Idle tick granularity (ms) assuming a 32Khz rtc clock source with a 16 clock divisor
 #define IDLE_TICKS_TO_COUNTS(X) (RTC_CLOCK_RATE * X / 1000 / 16)
@@ -67,7 +66,6 @@ void rtos_entry(void)
 	HAL_PWR_DisableSleepOnExit();
 	
 	// User defined API initialziation
-	i2c_init();
 	led_init();
 	tcpserver_init(SERVER_PORT, MAX_CONNECTIONS);
   

@@ -143,6 +143,9 @@ void TcpThread(void const* argument)
 {
 	dprintf("Hostname is '%s', MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", hostname, macaddress[0], macaddress[1], macaddress[2], macaddress[3], macaddress[4], macaddress[5]);
 	
+	led_display_clear();
+	led_display_set_ip("loading");
+	
 	/* Create tcp_ip stack thread */
 	tcpip_init(NULL, NULL);
   
@@ -385,11 +388,15 @@ void DHCP_thread(void const * argument)
           
 					led_error(ErrorCodeNone);
 					u32_t addr = netif->ip_addr.addr;
-					dprintf("DHCP address changed to %lu.%lu.%lu.%lu\n", 
+					char addrStr[16] = { };
+					sprintf(addrStr,
+						"%lu.%lu.%lu.%lu", 
 						addr & 0xFF,
 						(addr >> 8) & 0xFF,
 						(addr >> 16) & 0xFF,
 						(addr >> 24) & 0xFF);
+					dprintf("DHCP address changed to %s\n", addrStr);
+					led_display_set_ip(addrStr);
 				}
 				else
 				{
@@ -410,7 +417,15 @@ void DHCP_thread(void const * argument)
 						netif_set_addr(netif, ip_2_ip4(&ipaddr), ip_2_ip4(&netmask), ip_2_ip4(&gw));
 
 						led_error(ErrorCodeDhcpTimeout);
-						dprintf("DHCP timeout. Defaulting to %d.%d.%d.%d instead.\n", IP_ADDR0, IP_ADDR1, IP_ADDR2, IP_ADDR3);
+						char addrStr[16] = {};
+						sprintf(addrStr, "%d.%d.%d.%d", 
+							IP_ADDR0,
+							IP_ADDR1,
+							IP_ADDR2,
+							IP_ADDR3);
+						
+						dprintf("DHCP timeout. Defaulting to %s instead.\n", addrStr);
+						led_display_set_ip(addrStr);
 					}
 					else
 					{

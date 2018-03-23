@@ -139,12 +139,6 @@
     <Filter Include="Header files\Device-specific files\lwIP\netif\ppp\polarssl">
       <UniqueIdentifier>{e5337be1-28e0-4698-be95-c74c40fcc9b2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header files\SD1306">
-      <UniqueIdentifier>{e9e354c1-28c7-458c-b2cc-d14e43d88a29}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source files\SD1306">
-      <UniqueIdentifier>{78ab0b28-b1d3-494d-a3e6-35c11e1e08ba}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source files\Apps">
       <UniqueIdentifier>{134ebdfc-0ed6-4cc2-8827-185842944af4}</UniqueIdentifier>
     </Filter>
@@ -1485,15 +1479,6 @@
     <ClCompile Include="libtelnet.c">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="Adafruit_GFX.cpp">
-      <Filter>Source files\SD1306</Filter>
-    </ClCompile>
-    <ClCompile Include="Adafruit_SSD1306.cpp">
-      <Filter>Source files\SD1306</Filter>
-    </ClCompile>
-    <ClCompile Include="i2c.c">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="stm32f7xx_hal_msp.c">
       <Filter>Source files</Filter>
     </ClCompile>
@@ -1542,8 +1527,8 @@
     <ClCompile Include="rtosmain.c">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="glcdfont.c">
-      <Filter>Source files\SD1306</Filter>
+    <ClCompile Include="message_app.c">
+      <Filter>Source files\Apps</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1562,15 +1547,6 @@
     <ClInclude Include="libtelnet.h">
       <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="Adafruit_GFX.h">
-      <Filter>Header files\SD1306</Filter>
-    </ClInclude>
-    <ClInclude Include="Adafruit_SSD1306.h">
-      <Filter>Header files\SD1306</Filter>
-    </ClInclude>
-    <ClInclude Include="i2c.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
     <ClInclude Include="main.h">
       <Filter>Header files</Filter>
     </ClInclude>
@@ -1587,6 +1563,9 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="rtosmain.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="lcdfont.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

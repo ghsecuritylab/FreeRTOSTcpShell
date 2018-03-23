@@ -34,9 +34,6 @@ extern "C" {
 	
 // RTOS entry
 #include "rtosmain.h"
-	
-// I2C functionality
-#include "i2c.h"
 
 // LED control to be used during command processing.
 #include "led_display.h"

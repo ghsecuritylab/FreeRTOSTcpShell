@@ -14,7 +14,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{AA38C0EC-5293-4C40-A208-71F6FD677538}</ProjectGuid>
     <BSP_ID>com.sysprogs.arm.stm32</BSP_ID>
-    <BSP_VERSION>4.5R3</BSP_VERSION>
+    <BSP_VERSION>4.6R2</BSP_VERSION>
     <InPlaceBSPSubdir />
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,21 +70,19 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <ItemGroup>
-    <ClCompile Include="Adafruit_GFX.cpp" />
-    <ClCompile Include="Adafruit_SSD1306.cpp" />
     <ClCompile Include="echo_app.c" />
     <ClCompile Include="ethernetif.c" />
     <ClCompile Include="exit_app.c" />
-    <ClCompile Include="glcdfont.c" />
     <ClCompile Include="help_app.c" />
     <ClCompile Include="hostname_app.c" />
-    <ClCompile Include="i2c.c" />
     <ClCompile Include="led_display.c" />
     <ClCompile Include="libtelnet.c" />
     <ClCompile Include="logon_app.c" />
     <ClCompile Include="mac_app.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="message_app.c" />
     <ClCompile Include="reset_app.c" />
+    <ClInclude Include="lcdfont.h" />
     <ClInclude Include="rtosmain.h" />
     <ClCompile Include="set_app.c" />
     <ClCompile Include="shell_app.c" />
@@ -94,11 +92,8 @@
     <ClCompile Include="rtosmain.c" />
     <ClCompile Include="system_stm32f7xx.c" />
     <ClCompile Include="console.c" />
-    <ClInclude Include="Adafruit_GFX.h" />
-    <ClInclude Include="Adafruit_SSD1306.h" />
     <ClInclude Include="console.h" />
     <ClInclude Include="ethernetif.h" />
-    <ClInclude Include="i2c.h" />
     <ClInclude Include="led_display.h" />
     <ClInclude Include="libtelnet.h" />
     <ClInclude Include="lwipopts.h" />

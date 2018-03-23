@@ -18,6 +18,7 @@
     <ProjectFile>TcpShell.vcxproj</ProjectFile>
     <RemoteBuildEnvironment>
       <Records />
+      <EnvironmentSetupFiles />
     </RemoteBuildEnvironment>
     <ParallelJobCount>1</ParallelJobCount>
     <SuppressDirectoryChangeMessages>true</SuppressDirectoryChangeMessages>
@@ -59,19 +60,17 @@
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings">
         <CommandLine>-f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg -c init -c "reset init"</CommandLine>
         <ExtraParameters>
-          <Frequency>1800</Frequency>
+          <Frequency xsi:nil="true" />
           <BoostedFrequency xsi:nil="true" />
           <ConnectUnderReset>false</ConnectUnderReset>
         </ExtraParameters>
         <LoadProgressGUIThreshold>131072</LoadProgressGUIThreshold>
-        <ProgramMode>Auto</ProgramMode>
+        <ProgramMode>Enabled</ProgramMode>
         <StartupCommands>
           <string>set remotetimeout 60</string>
           <string>target remote :$$SYS:GDB_PORT$$</string>
-          <string>mon cortex_m7 mask_isr on</string>
           <string>mon halt</string>
           <string>mon reset init</string>
-          <string>mon cortex_m7 mask_isr on</string>
           <string>load</string>
         </StartupCommands>
         <PreferredGDBPort>0</PreferredGDBPort>

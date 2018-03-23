@@ -24,7 +24,8 @@ const papp app_list[MAX_USERAPP] =
 	(const papp)&mac_app,
 	(const papp)&reset_app,
 	(const papp)&exit_app,
-	(const papp)&help_app
+	(const papp)&help_app,
+	(const papp)&message_app
 };
 
 pconsole console_init(struct netconn* newconn, unsigned int connid)

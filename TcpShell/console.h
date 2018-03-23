@@ -4,7 +4,7 @@
 #include <semphr.h>
 #include "tcpshell.h"
 
-#define MAX_USERAPP 9
+#define MAX_USERAPP 10
 #define MAX_USERNAME_LEN  128
 #define MAX_ENV_LEN       32
 #define MAX_ARGV          9
@@ -75,6 +75,7 @@ extern const app mac_app;
 extern const app reset_app;
 extern const app exit_app;
 extern const app help_app;
+extern const app message_app;
 
 // The user app list. Last app token is NULL.
 extern const papp app_list[MAX_USERAPP];
