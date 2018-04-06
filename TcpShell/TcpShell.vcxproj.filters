@@ -1533,6 +1533,12 @@
     <ClCompile Include="beep_app.c">
       <Filter>Source files\Apps</Filter>
     </ClCompile>
+    <ClCompile Include="memcpy4.s">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="db_app.c">
+      <Filter>Source files\Apps</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tcpshell.h">

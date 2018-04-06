@@ -71,6 +71,7 @@
   </ImportGroup>
   <ItemGroup>
     <ClCompile Include="beep_app.c" />
+    <ClCompile Include="db_app.c" />
     <ClCompile Include="echo_app.c" />
     <ClCompile Include="ethernetif.c" />
     <ClCompile Include="exit_app.c" />
@@ -81,6 +82,7 @@
     <ClCompile Include="logon_app.c" />
     <ClCompile Include="mac_app.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="memcpy4.s" />
     <ClCompile Include="message_app.c" />
     <ClCompile Include="reset_app.c" />
     <ClInclude Include="lcdfont.h" />

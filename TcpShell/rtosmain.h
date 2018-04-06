@@ -23,5 +23,6 @@ extern volatile int idle_granularity_ms;
 // RTOS entry
 void rtos_entry(void);
 void beep(uint16_t millis);
+void* memcpy4(void*, void*, int);
 
 const char* rtos_hal_status(HAL_StatusTypeDef halTD);
