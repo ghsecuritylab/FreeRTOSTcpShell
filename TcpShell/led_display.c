@@ -17,28 +17,22 @@
 #define SSD1306_PIXEL_COLS 128
 #define SSD1306_TEXT_ROWS (SSD1306_PIXEL_ROWS / FONT_HEIGHT)
 #define SSD1306_TEXT_COLS (SSD1306_PIXEL_COLS / FONT_WIDTH)
+#define SSD1306_TXLEN 16
 
-#define SSD1306_COMMAND(C,...) { \
+#define SSD1306_BASE(C,A,...) { \
 	uint8_t data[] = { __VA_ARGS__ }; \
 	for(size_t i = 0 ; i < sizeof(data)/sizeof(data[0]) ; ++i) { \
-		status = HAL_I2C_Mem_Write(&hi2c1, address, 0x00, 1, &data[i], 1, 10); \
+		status = HAL_I2C_Mem_Write(&hi2c1, address, A, 1, &data[i], 1, 100); \
 		if(HAL_OK != status) { \
-			dprintf(SSD1306 C " failed\n"); \
+			dprintf(SSD1306 C " DMA failed\n"); \
 			goto exit; \
 		} \
 	} \
 }
 
-#define SSD1306_DATA(C,...) { \
-	uint8_t data[] = { __VA_ARGS__ }; \
-	for(size_t i = 0 ; i < sizeof(data)/sizeof(data[0]) ; ++i) { \
-		status = HAL_I2C_Mem_Write(&hi2c1, address, 0x40, 1, &data[i], 1, 10); \
-		if(HAL_OK != status) { \
-			dprintf(SSD1306 C " failed\n"); \
-			goto exit; \
-		} \
-	} \
-}
+#define SSD1306_COMMAND(C,...) SSD1306_BASE(C, 0x00, __VA_ARGS__)
+
+#define SSD1306_DATA(C,...) SSD1306_BASE(C, 0x40, __VA_ARGS__)
 
 #define SSD1306_SETCONTRAST 0x81
 #define SSD1306_DISPLAYALLON_RESUME 0xA4

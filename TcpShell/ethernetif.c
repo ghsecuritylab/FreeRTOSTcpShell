@@ -187,8 +187,8 @@ static void low_level_init(struct netif *netif)
   netif->flags |= NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
 
   /* create a binary semaphore used for informing ethernetif of frame reception */
-  osSemaphoreDef(SEM);
-  s_xSemaphore = osSemaphoreCreate(osSemaphore(SEM) , 1 );
+  osSemaphoreDef(ETH);
+  s_xSemaphore = osSemaphoreCreate(osSemaphore(ETH) , 1 );
 
   /* create the task that handles the ETH_MAC */
   osThreadDef(EthIf, ethernetif_input, osPriorityRealtime, 0, INTERFACE_THREAD_STACK_SIZE);
@@ -273,7 +273,7 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
   }
 
   /* Clean and Invalidate data cache */
-  SCB_CleanInvalidateDCache();  
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)buffer, framelength);  
   /* Prepare transmit descriptors to give to DMA */ 
   HAL_ETH_TransmitFrame(&heth, framelength);
   
@@ -327,7 +327,7 @@ static struct pbuf * low_level_input(struct netif *netif)
   }
   
   /* Clean and Invalidate data cache */
-  SCB_CleanInvalidateDCache();
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t*)buffer, len);
   
   if (p != NULL)
   {
