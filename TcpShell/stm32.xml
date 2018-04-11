@@ -4,10 +4,10 @@
   <ToolchainVersion>
     <GCC>7.2.0</GCC>
     <GDB>8.0.1</GDB>
-    <Revision>2</Revision>
+    <Revision>3</Revision>
   </ToolchainVersion>
   <BspID>com.sysprogs.arm.stm32</BspID>
-  <BspVersion>4.6R2</BspVersion>
+  <BspVersion>4.6R3</BspVersion>
   <McuID>STM32F746ZG</McuID>
   <MCUDefinitionFile>STM32F7xxxx/DeviceDefinitions/stm32f746xx.xml</MCUDefinitionFile>
   <MCUProperties>

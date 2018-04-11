@@ -17,6 +17,7 @@ extern "C" {
 #include <semphr.h>
 #include <assert.h>
 #include <queue.h>
+#include <stdbool.h>
 #include "lwipopts.h"
 #include "libtelnet.h"
 	

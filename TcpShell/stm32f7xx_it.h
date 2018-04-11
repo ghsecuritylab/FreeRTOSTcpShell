@@ -36,21 +36,37 @@
 #define __STM32F7xx_IT_H
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif 
 
-/* Includes ------------------------------------------------------------------*/
+	/* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
 #include "main.h"
-/* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
+	/* Exported types ------------------------------------------------------------*/
+	/* Exported constants --------------------------------------------------------*/
+	/* Exported macro ------------------------------------------------------------*/
+	/* Exported functions ------------------------------------------------------- */
 
-void SysTick_Handler(void);
-void I2C1_EV_IRQHandler(void);
-void I2C1_ER_IRQHandler(void);
-void ETH_IRQHandler(void);
+	void NMI_Handler(void);
+	void HardFault_Handler(void);
+	void MemManage_Handler(void);
+	void BusFault_Handler(void);
+	void UsageFault_Handler(void);
+	void SVC_Handler(void);
+	void DebugMon_Handler(void);
+	void PendSV_Handler(void);
+	void SysTick_Handler(void);
+	void DMA1_Stream0_IRQHandler(void);
+	void DMA1_Stream5_IRQHandler(void);
+	void DMA1_Stream6_IRQHandler(void);
+	void I2C1_EV_IRQHandler(void);
+	void I2C1_ER_IRQHandler(void);
+	void SPI1_IRQHandler(void);
+	void DMA2_Stream2_IRQHandler(void);
+	void ETH_IRQHandler(void);
+	void ETH_WKUP_IRQHandler(void);
+	void DMA2_Stream5_IRQHandler(void);
+
 
 #ifdef __cplusplus
 }

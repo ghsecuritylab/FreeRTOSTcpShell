@@ -22,7 +22,7 @@
 #define SSD1306_BASE(C,A,...) { \
 	uint8_t data[] = { __VA_ARGS__ }; \
 	for(size_t i = 0 ; i < sizeof(data)/sizeof(data[0]) ; ++i) { \
-		status = HAL_I2C_Mem_Write(&hi2c1, address, A, 1, &data[i], 1, 100); \
+		status = DisplayCorD(address, A, I2C_MEMADD_SIZE_8BIT, &data[i], 1); \
 		if(HAL_OK != status) { \
 			dprintf(SSD1306 C " DMA failed\n"); \
 			goto exit; \
@@ -69,6 +69,9 @@
 #define SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL 0x29
 #define SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL 0x2A
 
+#define SSD1306_MAXTRIALS 1000
+#define SSD1306_TIMEOUT 100
+
 typedef enum Ssd1306Command_t
 {
 	Clear,
@@ -94,14 +97,17 @@ typedef struct Ssd1306Message_t
 	Ssd1306MessageData Data;
 } Ssd1306Message;
 
-const int max_status_lines = SSD1306_TEXT_ROWS - 1;
 extern I2C_HandleTypeDef hi2c1;
+extern DMA_HandleTypeDef hdma_i2c1_rx;
+extern DMA_HandleTypeDef hdma_i2c1_tx;
 
+const int max_status_lines = SSD1306_TEXT_ROWS - 1;
 static osThreadId HeartbeatLedHandle = NULL;
 static osThreadId BusyLedHandle = NULL;
 static osThreadId ErrorLedHandle = NULL;
 static osThreadId DisplayHandle = NULL;
 static QueueHandle_t DisplayQueue;
+static HAL_StatusTypeDef dmaResult;
 static int LcdX = 0;
 static int LcdY = 0;
 static char ipAddr[16] = "              ";
@@ -111,7 +117,8 @@ static void led_display_set_cursor(int x, int y);
 static void HeartbeatLedThread(void const *argument);
 static void BusyLedThread(void const *argument);
 static void ErrorLedThread(void const *argument);
-extern void DisplayLedThread(void const *argument);
+static void DisplayLedThread(void const *argument);
+static HAL_StatusTypeDef DisplayCorD(uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size);
 
 void led_init()
 {
@@ -121,6 +128,7 @@ void led_init()
 	osThreadDef(HeartbeatLed, HeartbeatLedThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
 	osThreadDef(BusyLed, BusyLedThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
 	osThreadDef(ErrorLed, ErrorLedThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE);
+	osSemaphoreDef(DispXfer);
 	osThreadDef(Display, DisplayLedThread, osPriorityNormal, 0, 2 * configMINIMAL_STACK_SIZE);
 		
 	HeartbeatLedHandle = osThreadCreate(osThread(HeartbeatLed), NULL);
@@ -212,10 +220,10 @@ static void HeartbeatLedThread(void const *argument)
   
 	for (;;)
 	{
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
 		osDelay(500);
 		
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
 		osDelay(750);
 	}
 }
@@ -269,8 +277,8 @@ void DisplayLedThread(void const *argument)
 	const int TextWidth = SSD1306_TEXT_COLS;
 	const int TextHeight = SSD1306_TEXT_ROWS;
 	HAL_StatusTypeDef status;
-	
-	status = HAL_I2C_IsDeviceReady(&hi2c1, address, 1000, 10000);
+		
+	status = HAL_I2C_IsDeviceReady(&hi2c1, address, SSD1306_MAXTRIALS, SSD1306_TIMEOUT);
 	if (HAL_OK != status)
 	{
 		dprintf(SSD1306 "display not ready\n");
@@ -379,4 +387,20 @@ exit:
 	{
 		osThreadTerminate(NULL);
 	}
+}
+
+HAL_StatusTypeDef DisplayCorD(uint16_t DevAddress, uint16_t MemAddress, uint16_t MemAddSize, uint8_t *pData, uint16_t Size)
+{
+	I2C_HandleTypeDef* pi2c = &hi2c1;
+	HAL_StatusTypeDef status = HAL_I2C_Mem_Write_DMA(pi2c, DevAddress, MemAddress, MemAddSize, pData, Size);
+	if (status != HAL_OK)
+	{
+		goto exit;
+	}
+	
+	/* Check if the display is ready for a new operation */
+	while (HAL_I2C_GetState(pi2c) != HAL_I2C_STATE_READY) ;
+
+exit:
+	return status;
 }

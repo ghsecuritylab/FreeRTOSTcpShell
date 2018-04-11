@@ -37,50 +37,51 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include <FreeRTOS.h>
-#include <stdbool.h>
 #include "main.h"
 #include "stm32f7xx_hal.h"
-#include "tcpshell.h"
-#include "ethernetif.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "tcpshell.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
 
 DAC_HandleTypeDef hdac;
+DMA_HandleTypeDef hdma_dac1;
 
 ETH_HandleTypeDef heth;
 
 I2C_HandleTypeDef hi2c1;
+DMA_HandleTypeDef hdma_i2c1_rx;
+DMA_HandleTypeDef hdma_i2c1_tx;
 
 RNG_HandleTypeDef hrng;
 
 RTC_HandleTypeDef hrtc;
-RTC_TimeTypeDef sTime = { 12, 0, 0 };
-RTC_DateTypeDef sDate = { RTC_WEEKDAY_THURSDAY, RTC_MONTH_JANUARY, 1, 0 };
 
-extern ETH_DMADescTypeDef  DMARxDscrTab[ETH_RXBUFNB];
-extern ETH_DMADescTypeDef  DMATxDscrTab[ETH_TXBUFNB];
-extern uint8_t Rx_Buff[ETH_RXBUFNB][ETH_RX_BUF_SIZE];
-extern uint8_t Tx_Buff[ETH_TXBUFNB][ETH_TX_BUF_SIZE];
+SPI_HandleTypeDef hspi1;
+DMA_HandleTypeDef hdma_spi1_rx;
+DMA_HandleTypeDef hdma_spi1_tx;
+
+DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+RTC_TimeTypeDef sTime = { 12, 0, 0 };
+RTC_DateTypeDef sDate = { RTC_WEEKDAY_THURSDAY, RTC_MONTH_JANUARY, 1, 0 };
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
+static void MX_DMA_Init(void);
 static void MX_DAC_Init(void);
 static void MX_ETH_Init(void);
-static void MX_RTC_Init(void);
+static void MX_I2C1_Init(void);
 static void MX_RNG_Init(void);
-static void MPU_Config(void);
+static void MX_SPI1_Init(void);
+static void MX_RTC_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -95,10 +96,14 @@ int main(void)
 {
 
 	/* USER CODE BEGIN 1 */
-	
-	MPU_Config();
 
 	/* USER CODE END 1 */
+
+	/* Enable I-Cache-------------------------------------------------------------*/
+	SCB_EnableICache();
+
+	/* Enable D-Cache-------------------------------------------------------------*/
+	SCB_EnableDCache();
 
 	/* MCU Configuration----------------------------------------------------------*/
 
@@ -107,6 +112,8 @@ int main(void)
 
 	/* USER CODE BEGIN Init */
 
+	HAL_PWR_DisableSleepOnExit();
+	
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -118,13 +125,30 @@ int main(void)
 
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
-	MX_I2C1_Init();
+	MX_DMA_Init();
 	MX_DAC_Init();
 	MX_ETH_Init();
-	MX_RTC_Init();
+	MX_I2C1_Init();
 	MX_RNG_Init();
-	
+	MX_SPI1_Init();
+	MX_RTC_Init();
+
+	/* USER CODE BEGIN 2 */
 	rtos_entry();
+
+	/* USER CODE END 2 */
+
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
+	while (1)
+	{
+		/* USER CODE END WHILE */
+
+		/* USER CODE BEGIN 3 */
+
+	}
+	/* USER CODE END 3 */
+
 }
 
 /** System Clock Configuration
@@ -140,7 +164,7 @@ void SystemClock_Config(void)
 	*/
 	__HAL_RCC_PWR_CLK_ENABLE();
 
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
 	/**Initializes the CPU, AHB and APB busses clocks 
 	*/
@@ -151,10 +175,17 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 	RCC_OscInitStruct.PLL.PLLM = 8;
-	RCC_OscInitStruct.PLL.PLLN = 72;
+	RCC_OscInitStruct.PLL.PLLN = 216;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-	RCC_OscInitStruct.PLL.PLLQ = 3;
+	RCC_OscInitStruct.PLL.PLLQ = 9;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+	{
+		_Error_Handler(__FILE__, __LINE__);
+	}
+
+	/**Activate the Over-Drive mode 
+	*/
+	if (HAL_PWREx_EnableOverDrive() != HAL_OK)
 	{
 		_Error_Handler(__FILE__, __LINE__);
 	}
@@ -165,10 +196,10 @@ void SystemClock_Config(void)
 	                            | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
 	{
 		_Error_Handler(__FILE__, __LINE__);
 	}
@@ -198,6 +229,7 @@ void SystemClock_Config(void)
 /* DAC init function */
 static void MX_DAC_Init(void)
 {
+
 	DAC_ChannelConfTypeDef sConfig;
 
 	/**DAC Initialization 
@@ -216,41 +248,38 @@ static void MX_DAC_Init(void)
 	{
 		_Error_Handler(__FILE__, __LINE__);
 	}
+
 }
 
 /* ETH init function */
 static void MX_ETH_Init(void)
 {
 
-	heth.Instance = ETH;  
-	heth.Init.MACAddr = (uint8_t*)macaddress;
+	uint8_t MACAddr[6];
+
+	heth.Instance = ETH;
 	heth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
-	heth.Init.Speed = ETH_SPEED_100M;
-	heth.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
-	heth.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
-	//heth.Init.RxMode = ETH_RXINTERRUPT_MODE;
-	heth.Init.RxMode = ETH_RXPOLLING_MODE;
-	heth.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
 	heth.Init.PhyAddress = LAN8742A_PHY_ADDRESS;
-  
-	/* configure ethernet peripheral (GPIOs, clocks, MAC, DMA) */
+	MACAddr[0] = 0x00;
+	MACAddr[1] = 0x80;
+	MACAddr[2] = 0xE1;
+	MACAddr[3] = 0x00;
+	MACAddr[4] = 0x00;
+	MACAddr[5] = 0x00;
+	heth.Init.MACAddr = &MACAddr[0];
+	heth.Init.RxMode = ETH_RXINTERRUPT_MODE;
+	heth.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
+	heth.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
+
+	/* USER CODE BEGIN MACADDRESS */
+    
+	/* USER CODE END MACADDRESS */
+
 	if (HAL_ETH_Init(&heth) != HAL_OK)
 	{
-		/* Set netif link flag */
 		_Error_Handler(__FILE__, __LINE__);
 	}
-  
-	/* Initialize Tx Descriptors list: Chain Mode */
-	if (HAL_ETH_DMATxDescListInit(&heth, DMATxDscrTab, &Tx_Buff[0][0], ETH_TXBUFNB) != HAL_OK)
-	{
-		_Error_Handler(__FILE__, __LINE__);
-	}
-     
-	/* Initialize Rx Descriptors list: Chain Mode  */
-	if (HAL_ETH_DMARxDescListInit(&heth, DMARxDscrTab, &Rx_Buff[0][0], ETH_RXBUFNB) != HAL_OK)
-	{
-		_Error_Handler(__FILE__, __LINE__);
-	}
+
 }
 
 /* I2C1 init function */
@@ -258,7 +287,7 @@ static void MX_I2C1_Init(void)
 {
 
 	hi2c1.Instance = I2C1;
-	hi2c1.Init.Timing = 0x00808CD2;
+	hi2c1.Init.Timing = 0x6000030D;
 	hi2c1.Init.OwnAddress1 = 0;
 	hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
 	hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -339,12 +368,80 @@ static void MX_RTC_Init(void)
 		_Error_Handler(__FILE__, __LINE__);
 	}
 
-	/**Enable the reference Clock input 
-	*/
-	if (HAL_RTCEx_SetRefClock(&hrtc) != HAL_OK)
+}
+
+/* SPI1 init function */
+static void MX_SPI1_Init(void)
+{
+
+	/* SPI1 parameter configuration*/
+	hspi1.Instance = SPI1;
+	hspi1.Init.Mode = SPI_MODE_MASTER;
+	hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+	hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+	hspi1.Init.NSS = SPI_NSS_SOFT;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+	hspi1.Init.CRCPolynomial = 7;
+	hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+	hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+	if (HAL_SPI_Init(&hspi1) != HAL_OK)
 	{
 		_Error_Handler(__FILE__, __LINE__);
 	}
+
+}
+
+/** 
+  * Enable DMA controller clock
+  * Configure DMA for memory to memory transfers
+  *   hdma_memtomem_dma2_stream0
+  */
+static void MX_DMA_Init(void) 
+{
+	/* DMA controller clock enable */
+	__HAL_RCC_DMA1_CLK_ENABLE();
+	__HAL_RCC_DMA2_CLK_ENABLE();
+
+	/* Configure DMA request hdma_memtomem_dma2_stream0 on DMA2_Stream0 */
+	hdma_memtomem_dma2_stream0.Instance = DMA2_Stream0;
+	hdma_memtomem_dma2_stream0.Init.Channel = DMA_CHANNEL_0;
+	hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
+	hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_ENABLE;
+	hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_ENABLE;
+	hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+	hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+	hdma_memtomem_dma2_stream0.Init.Mode = DMA_NORMAL;
+	hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_HIGH;
+	hdma_memtomem_dma2_stream0.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+	hdma_memtomem_dma2_stream0.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+	hdma_memtomem_dma2_stream0.Init.MemBurst = DMA_MBURST_SINGLE;
+	hdma_memtomem_dma2_stream0.Init.PeriphBurst = DMA_PBURST_SINGLE;
+	if (HAL_DMA_Init(&hdma_memtomem_dma2_stream0) != HAL_OK)
+	{
+		_Error_Handler(__FILE__, __LINE__);
+	}
+
+	/* DMA interrupt init */
+	/* DMA1_Stream0_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+	/* DMA1_Stream5_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+	/* DMA1_Stream6_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+	/* DMA2_Stream2_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+	/* DMA2_Stream5_IRQn interrupt configuration */
+	HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(DMA2_Stream5_IRQn);
 
 }
 
@@ -354,13 +451,6 @@ static void MX_RTC_Init(void)
         * Output
         * EVENT_OUT
         * EXTI
-     PD8   ------> USART3_TX
-     PD9   ------> USART3_RX
-     PA8   ------> USB_OTG_FS_SOF
-     PA9   ------> USB_OTG_FS_VBUS
-     PA10   ------> USB_OTG_FS_ID
-     PA11   ------> USB_OTG_FS_DM
-     PA12   ------> USB_OTG_FS_DP
 */
 static void MX_GPIO_Init(void)
 {
@@ -369,65 +459,35 @@ static void MX_GPIO_Init(void)
 
 	/* GPIO Ports Clock Enable */
 	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOH_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
-	__HAL_RCC_GPIOD_CLK_ENABLE();
 	__HAL_RCC_GPIOG_CLK_ENABLE();
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOB, LD1_Pin | LD3_Pin | LD2_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOB, LD2_Pin | LD1_Pin, GPIO_PIN_RESET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(USB_PowerSwitchOn_GPIO_Port, USB_PowerSwitchOn_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(SDC_CS_GPIO_Port, SDC_CS_Pin, GPIO_PIN_SET);
 
-	/*Configure GPIO pin : USER_Btn_Pin */
-	GPIO_InitStruct.Pin = USER_Btn_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(USER_Btn_GPIO_Port, &GPIO_InitStruct);
+	/*Configure GPIO pin : UserBtn_Pin */
+	GPIO_InitStruct.Pin = UserBtn_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(UserBtn_GPIO_Port, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : LD1_Pin LD3_Pin LD2_Pin */
-	GPIO_InitStruct.Pin = LD1_Pin | LD3_Pin | LD2_Pin;
+	/*Configure GPIO pins : LD2_Pin LD1_Pin */
+	GPIO_InitStruct.Pin = LD2_Pin | LD1_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-	/*Configure GPIO pins : STLK_RX_Pin STLK_TX_Pin */
-	GPIO_InitStruct.Pin = STLK_RX_Pin | STLK_TX_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = GPIO_AF7_USART3;
-	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-	/*Configure GPIO pin : USB_PowerSwitchOn_Pin */
-	GPIO_InitStruct.Pin = USB_PowerSwitchOn_Pin;
+	/*Configure GPIO pin : SDC_CS_Pin */
+	GPIO_InitStruct.Pin = SDC_CS_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(USB_PowerSwitchOn_GPIO_Port, &GPIO_InitStruct);
-
-	/*Configure GPIO pin : USB_OverCurrent_Pin */
-	GPIO_InitStruct.Pin = USB_OverCurrent_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(USB_OverCurrent_GPIO_Port, &GPIO_InitStruct);
-
-	/*Configure GPIO pins : USB_SOF_Pin USB_ID_Pin USB_DM_Pin USB_DP_Pin */
-	GPIO_InitStruct.Pin = USB_SOF_Pin | USB_ID_Pin | USB_DM_Pin | USB_DP_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-	/*Configure GPIO pin : USB_VBUS_Pin */
-	GPIO_InitStruct.Pin = USB_VBUS_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(USB_VBUS_GPIO_Port, &GPIO_InitStruct);
+	HAL_GPIO_Init(SDC_CS_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -447,54 +507,6 @@ void _Error_Handler(char * file, int line)
 	BREAK_ERROR_HANDLER();
 	/* USER CODE END Error_Handler_Debug */ 
 }
-
-/**
-  * @brief  Configure the MPU attributes as Device for  Ethernet Descriptors in the SRAM1.
-  * @note   The Base Address is 0x20010000 since this memory interface is the AXI.
-  *         The Configured Region Size is 256B (size of Rx and Tx ETH descriptors) 
-  *       
-  * @param  None
-  * @retval None
-  */
-static void MPU_Config(void)
-{
-	MPU_Region_InitTypeDef MPU_InitStruct;
-  
-	/* Disable the MPU */
-	HAL_MPU_Disable();
-  
-	/* Configure the MPU attributes as Device for Ethernet Descriptors in the SRAM */
-	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-	MPU_InitStruct.BaseAddress = (uint32_t)&DMARxDscrTab[0];
-	MPU_InitStruct.Size = MPU_REGION_SIZE_128B;
-	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-	MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-	MPU_InitStruct.SubRegionDisable = 0x00;
-	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-	HAL_MPU_ConfigRegion(&MPU_InitStruct);
-  
-	/* Configure the MPU attributes as Device for Ethernet Descriptors in the SRAM */
-	MPU_InitStruct.Enable = MPU_REGION_ENABLE;
-	MPU_InitStruct.BaseAddress = (uint32_t)&DMATxDscrTab[0];
-	MPU_InitStruct.Size = MPU_REGION_SIZE_128B;
-	MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
-	MPU_InitStruct.IsBufferable = MPU_ACCESS_BUFFERABLE;
-	MPU_InitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;
-	MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
-	MPU_InitStruct.Number = MPU_REGION_NUMBER0;
-	MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
-	MPU_InitStruct.SubRegionDisable = 0x00;
-	MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-	HAL_MPU_ConfigRegion(&MPU_InitStruct);
-
-	/* Enable the MPU */
-	HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-}
-
 
 /**
   * @}
