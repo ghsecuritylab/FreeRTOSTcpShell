@@ -49,6 +49,8 @@ extern DMA_HandleTypeDef hdma_spi1_rx;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern SPI_HandleTypeDef hspi1;
 
+static void prvGetRegistersFromStack(unsigned int *pulFaultStackAddress);
+
 /******************************************************************************/
 /*            Cortex-M7 Processor Interruption and Exception Handlers         */ 
 /******************************************************************************/
@@ -226,6 +228,7 @@ void DMA2_Stream5_IRQHandler(void)
 
 void __attribute__((naked)) HardFault_Handler() 
 {
+#ifdef DEBUG
 	// Bleh. Maybe we'll find out where these hard faults were coming from some day.
 	__asm volatile
 	(
@@ -235,6 +238,7 @@ void __attribute__((naked)) HardFault_Handler()
 	    " mrsne r0, psp                                             \n"
 	    " b prvGetRegistersFromStack                                \n"
 	);
+#endif // DEBUG
 }
 
 static void prvGetRegistersFromStack(unsigned int *pulFaultStackAddress)

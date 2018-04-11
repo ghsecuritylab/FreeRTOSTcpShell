@@ -36,7 +36,6 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <list.h>
-#include <math.h>
 #include "tcpshell.h"
 
 // Idle tick granularity (ms) assuming a 32Khz rtc clock source with a 16 clock divisor
@@ -76,11 +75,17 @@ void rtos_entry(void)
 
 void beep(uint16_t millis)
 {
-	
-	
-	if (HAL_OK == HAL_DAC_Start_DMA(&hdac, DAC_CHANNEL_1, pData, pDataLen, DAC_ALIGN_8B_R))
+	if (HAL_OK == HAL_DAC_Start(&hdac, DAC_CHANNEL_1))
 	{
-		vTaskDelay(millis);
+		TickType_t end = HAL_GetTick() + millis / portTICK_PERIOD_MS;
+		while (HAL_GetTick() < end)
+		{
+			HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_8B_R, UINT8_MAX);
+			vTaskDelay(1);
+			HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_8B_R, 0);
+			vTaskDelay(1);
+		}
+		
 		HAL_DAC_Stop(&hdac, DAC_CHANNEL_1);
 	}
 }
